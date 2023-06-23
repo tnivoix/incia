@@ -1,0 +1,8 @@
+**/*.smr
+**/*.S2R
+**/*.odk
+**/*.ori
+
+.env/
+.vscode/
+.ipynb_checkpoints/
