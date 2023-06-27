@@ -24,7 +24,23 @@ class Folder:
         self.experiments = []
         self.setExperiments()
 
-    def getExperienceNumber(self, fileName):
+    def getType(self):
+        type = ""
+        for e in self.experiments:
+            type += e.getName() + " / "
+        type = type[:-3]
+        return type
+
+    def getMeanByExperimentAndFile(self, experimenbtNb, fileNb):
+        return self.experiments[experimenbtNb].files[fileNb]
+
+    def getMeans(self):
+        means = []
+        for e in self.experiments:
+            means.append(e.getMeans())
+        return means
+
+    def getExperimentNumber(self, fileName):
         before = "{date}-galv-{subject}_".format(date=self.date,subject=self.subject)
         number = fileName[len(before):len(before)+3]
         return number
@@ -47,7 +63,7 @@ class Folder:
         with os.scandir(self.path) as entries:
             for entry in entries:
                 if entry.is_file() and entry.name.endswith(".txt") and "Phase" in entry.name:
-                    number = self.getExperienceNumber(entry.name)
+                    number = self.getExperimentNumber(entry.name)
                     if number not in numbers:
                         numbers.append(number)
         i = 0
@@ -64,7 +80,7 @@ class Folder:
             "Date : {} / Subject : {}".format(self.date, self.subject)
         )
         for e in self.experiments:
-          graph.addAllGraphs(fig, e.getExperimentData(), "{} {}".format(e.drugName, e.drugLoc), e.color, True)
+          graph.addAllGraphs(fig, e.getExperimentData(), e.getName(), e.color, True)
         graph.displayFigure(fig)
 
     def printFolderStats(self):
@@ -84,6 +100,15 @@ class Experiment:
         self.files = []
         self.setFiles()
 
+    def getMeans(self):
+        means = []
+        for file in self.files:
+            means.append(file.mean)
+        return means
+
+    def getName(self):
+        return "{} {}".format(self.drugName, self.drugLoc)
+
     def setFiles(self):
         for side in Side:
             for root in Root:
@@ -95,9 +120,9 @@ class Experiment:
             file.setData()
 
     def getExperimentData(self):
-        data = {}
+        data = []
         for file in self.files:
-            data[file.getFileName()] = file.getData()
+            data.append(file.getData())
         return data
 
     def printExperimentStats(self):
@@ -109,7 +134,7 @@ class Experiment:
         fig = graph.setupFigure(
             "Date : {} / Subject : {}".format(self.folder.date, self.folder.subject)
         )
-        graph.addAllGraphs(fig, self.getExperimentData(), "{} {}".format(self.drugName, self.drugLoc), self.color, False)
+        graph.addAllGraphs(fig, self.getExperimentData(), self.getName(), self.color, False)
         graph.displayFigure(fig)
 
 
@@ -119,7 +144,9 @@ class File:
         self.side = side
         self.root = root
         self.data = []
+        self.mean = 0
         self.setData(False)
+        self.calcMean()
 
     def getFileName(self):
         file_name = "{date}-galv-{subject}_{step}-Phase Ev-GVS & MS-{side}-{root}- mode 'S-S'.txt".format(
@@ -191,6 +218,9 @@ class File:
 
     def getData(self):
         return self.data
+
+    def calcMean(self):
+        self.mean = circmean(self.data)
 
     def printStats(self):
         # Nb phases

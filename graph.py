@@ -36,6 +36,7 @@ def setupFigure(name):
 
 
 def addOneGraph(ax, data, label, color, onlyVector):
+    data = [x for x in data if str(x) != 'nan']
     mean = circmean(data)
 
     r = 1 - circvar(data)
@@ -44,7 +45,7 @@ def addOneGraph(ax, data, label, color, onlyVector):
     ax.quiver(mean, 0, 0, r, label=label, color=color, angles="xy", scale=2)
 
 def addAllGraphs(fig, data, label, color, onlyVector):
-    for value, subplot in zip(data.values(), fig.get_axes()):
+    for value, subplot in zip(data, fig.get_axes()):
         addOneGraph(subplot, value, label, color, onlyVector)
 
 
