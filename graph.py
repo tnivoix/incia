@@ -1,5 +1,7 @@
 # Lib for graphs visualisation
+import matplotlib
 import matplotlib.pyplot as plt
+matplotlib.use("TkAgg")
 
 # Libs for stats
 from scipy.stats import circmean, circvar

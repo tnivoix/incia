@@ -2,10 +2,6 @@
 import numpy as np
 import pandas as pd
 
-# Lib for graphs visualisation
-import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
-
 # Libs for stats
 from scipy.stats import circmean, circvar
 from astropy.stats import rayleightest
@@ -13,7 +9,7 @@ from astropy.stats import rayleightest
 import os
 
 import graph
-from static import ROOT_FOLDER, Side, Root, Color
+from static import DATA_FOLDER, Side, Root, Color
 
 
 class Folder:
@@ -47,7 +43,8 @@ class Folder:
 
     def getExperimentInfos(self):
         try:
-            df = pd.read_excel(ROOT_FOLDER + "Angle-variation-toutes-racines.xlsx", sheet_name="Data", usecols="A:F")
+            # ERROR HERE folder
+            df = pd.read_excel(DATA_FOLDER + "Angle-variation-toutes-racines.xlsx", sheet_name="Data", usecols="A:F")
             df = df.loc[df["Individu"]=="{date}-{subject}".format(date=self.date,subject=self.subject)]
             df = df.loc[df["Racine "]=="C"]
             df = df.reset_index(drop=True)
@@ -212,7 +209,7 @@ class File:
             if not bis:
                 self.setData(True)
             else:
-              print("File not found.")
+              print("File {} not found.".format(self.experiment.folder.path + "/" + self.getFileName()))
         except pd.errors.EmptyDataError:
             print("No data")
 

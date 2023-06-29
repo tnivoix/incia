@@ -28,9 +28,10 @@ def getAllFolders(path):
 
 
 def menu():
-    answer = 0
-    while answer not in [1, 2, 3]:
-        print("Hello my friend, what do you want to do?")
+    answer = -1
+    while answer not in range(4):
+        print("What do you want to do?")
+        print("[0] Quit")
         print("[1] Analyse one specimen (choose subfolder)")
         print("[2] Analyse all specimens (choose folder)")
         print("[3] Analyse all specimens by type of experiment (choose folder)")
@@ -57,33 +58,38 @@ def displayMeansGraph(data, name, experiments):
     graph.displayFigure(fig)
 
 if __name__ == "__main__":
-    choice = menu()
-    directory = askDirectory()
-    if choice == 1:
-        path = directory.replace("\\", "/")
-        date, subject = getDateAndSubjectFromFolder(path)
-        folder = models.Folder(path, date, subject)
-        folder.displayFolderGraph()
-    elif choice == 2:
-        folders = getAllFolders(directory)
-        for folder in folders:
+    print("Hello my friend!")
+    choice = -1
+    while True:
+        choice = menu()
+        if choice == 0:
+            print("Goodbye my friend!")
+            break
+        directory = askDirectory()
+        if choice == 1:
+            path = directory.replace("\\", "/")
+            date, subject = getDateAndSubjectFromFolder(path)
+            folder = models.Folder(path, date, subject)
             folder.displayFolderGraph()
-            print(folder.getMeans())
-    elif choice == 3:
-        folders = getAllFolders(directory)
-        foldersByType = {}
-        for folder in folders:
-            type = folder.getType()
-            if type not in foldersByType.keys():
-                foldersByType[type] = []
-            foldersByType[type].append(folder)
-        for type in foldersByType.keys():
-            nbFolders = len(foldersByType[type])
-            newData = np.zeros((3,6,nbFolders))
-            for folderNb in range(nbFolders):
-                means = foldersByType[type][folderNb].getMeans()
-                for experimentNb in range(3):
-                    for graphNb in range(6):
-                        newData[experimentNb,graphNb,folderNb] = means[experimentNb][graphNb]
-            name = " / ".join(["{}-{}".format(f.date,f.subject) for f in foldersByType[type]])
-            displayMeansGraph(newData, name, type)
+        elif choice == 2:
+            folders = getAllFolders(directory)
+            for folder in folders:
+                folder.displayFolderGraph()
+        elif choice == 3:
+            folders = getAllFolders(directory)
+            foldersByType = {}
+            for folder in folders:
+                type = folder.getType()
+                if type not in foldersByType.keys():
+                    foldersByType[type] = []
+                foldersByType[type].append(folder)
+            for type in foldersByType.keys():
+                nbFolders = len(foldersByType[type])
+                newData = np.zeros((3,6,nbFolders))
+                for folderNb in range(nbFolders):
+                    means = foldersByType[type][folderNb].getMeans()
+                    for experimentNb in range(3):
+                        for graphNb in range(6):
+                            newData[experimentNb,graphNb,folderNb] = means[experimentNb][graphNb]
+                name = " / ".join(["{}-{}".format(f.date,f.subject) for f in foldersByType[type]])
+                displayMeansGraph(newData, name, type)
