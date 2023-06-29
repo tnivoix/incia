@@ -9,3 +9,8 @@ Choix des graphes (toujours les 6 graphes : 2 côtés et 3 racines) :
 - Un sujet dans une condition [OK]
 - Un sujet dans plusieurs conditions [OK]
 - Plusieurs sujets dans une même condition [OK]
+
+TODO :
+- Gérer les liens de fichiers de l'analyse
+- tester la détection de burst avec mes données
+- essayer de clean des pics d'erreur
