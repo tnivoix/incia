@@ -114,10 +114,9 @@ def getPhases(gvs):
     return phases, timePhases
 
 if __name__ == "__main__":
-    file_name = "230407-galv-s54_000"
+    file_name = "230407-galv-s54b_000"
     channels = getAllChannels(file_name)
-    for c in channels.keys():
-        print(c)
+    
     gvs = channels["GVS"]
     phases, timePhases = getPhases(gvs)
 
@@ -126,16 +125,15 @@ if __name__ == "__main__":
     start = time[0]
     end = time[-1]
 
-    R_Caud = channels["Rvr-Caud"]
-    #data = R_Caud["Data"][int(start/R_Caud["Frequency"]):int(end/R_Caud["Frequency"])]
-    #time = (np.arange(0,len(R_Caud["Data"]))*R_Caud["Frequency"])[int(start/R_Caud["Frequency"]):int(end/R_Caud["Frequency"])]
+    R_Caud = channels["Rvr-Mid"]
+    data = R_Caud["Data"][int(start/R_Caud["Frequency"]):int(end/R_Caud["Frequency"])]
+    time = (np.arange(0,len(R_Caud["Data"]))*R_Caud["Frequency"])[int(start/R_Caud["Frequency"]):int(end/R_Caud["Frequency"])]
 
-    data = R_Caud["Data"]
-    time = (np.arange(0,len(R_Caud["Data"]))*R_Caud["Frequency"])
+   
 
 
     amp_dual_thresh1 = (1,2)
-    f_range1 = (12,22)
+    f_range1 = (10,12)
 
 
     burst = getBurst(data, 1/R_Caud["Frequency"], amp_dual_thresh1, f_range1)
