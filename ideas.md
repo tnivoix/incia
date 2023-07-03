@@ -11,7 +11,16 @@ Choix des graphes (toujours les 6 graphes : 2 côtés et 3 racines) :
 - Plusieurs sujets dans une même condition [OK]
 
 TODO :
-- Tester la détection de burst avec mes données
-- Essayer de clean des pics d'erreur
 - Gérer les liens de fichiers de l'analyse
-- Faire un algo pour selectionner les phases
+- Affiner l'algo de détection de burst
+- Faire l'algo des starts de la stim
+
+Scripts Spike2 :
+- Artefact Suppressor
+- Burst Analysis
+- Event Counter
+- Integration (auto/manual)
+- MultiPhase
+- Overdraw
+- Phase Relationship
+- Sled-PSTH

@@ -116,6 +116,8 @@ def getPhases(gvs):
 if __name__ == "__main__":
     file_name = "230407-galv-s54_000"
     channels = getAllChannels(file_name)
+    for c in channels.keys():
+        print(c)
     gvs = channels["GVS"]
     phases, timePhases = getPhases(gvs)
 
@@ -125,32 +127,25 @@ if __name__ == "__main__":
     end = time[-1]
 
     R_Caud = channels["Rvr-Caud"]
-    data = R_Caud["Data"][int(start/R_Caud["Frequency"]):int(end/R_Caud["Frequency"])]
-    time = (np.arange(0,len(R_Caud["Data"]))*R_Caud["Frequency"])[int(start/R_Caud["Frequency"]):int(end/R_Caud["Frequency"])]
+    #data = R_Caud["Data"][int(start/R_Caud["Frequency"]):int(end/R_Caud["Frequency"])]
+    #time = (np.arange(0,len(R_Caud["Data"]))*R_Caud["Frequency"])[int(start/R_Caud["Frequency"]):int(end/R_Caud["Frequency"])]
 
-    while True:
-        a = random.uniform(0.5,5)
-        b = random.uniform(0.5,5)
-        c = random.uniform(5,50)
-        d = random.uniform(5,50)
-        # amp_dual_thresh1 = (1,3)
-        # f_range1 = (10,30)
+    data = R_Caud["Data"]
+    time = (np.arange(0,len(R_Caud["Data"]))*R_Caud["Frequency"])
 
-        amp_dual_thresh1 = (min(a,b),max(a,b))
-        f_range1 = (min(c,d),max(c,d))
 
-        burst = getBurst(data, 1/R_Caud["Frequency"], amp_dual_thresh1, f_range1)
-        burst_stats = getBurstStats(burst, 1/R_Caud["Frequency"])
+    amp_dual_thresh1 = (1,2)
+    f_range1 = (12,22)
 
-        if burst_stats["n_bursts"] in range(5,15):
-            print("Tresh = ({}, {})".format(a,b))
-            print("Freq = ({},{})".format(c,d))
 
-            for key, val in burst_stats.items():
-                print('{:15} \t: {}'.format(key, val))
-            print("")
+    burst = getBurst(data, 1/R_Caud["Frequency"], amp_dual_thresh1, f_range1)
+    burst_stats = getBurstStats(burst, 1/R_Caud["Frequency"])
 
-            plotData("R Caud Phase 1", data, time, burst)
+
+    for key, val in burst_stats.items():
+        print('{:15} \t: {}'.format(key, val))
+
+    plotData("R Caud Phase 1", data, time, burst)
 
 """
 Il faut des fréquences écartées pour avoir de grands bursts.
@@ -189,4 +184,11 @@ BAD
 Tresh = (2.893239855604112, 3.4267919214056533)
 Freq = (32.333335190181955,42.990037684309584)
 n_bursts                : 9
+"""
+
+"""
+0.01
+0.01
+0.5
+0.5
 """
