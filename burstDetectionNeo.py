@@ -86,17 +86,66 @@ def getBurst(data, fs, amp_dual_thresh, f_range):
 def getBurstStats(burst, fs):
     return compute_burst_stats(burst, fs)
 
+def getGVS(data):
+    gvs = []
+    times = []
+    for signals in data.analogsignals:
+        if "GVS" in signals.array_annotations["channel_names"]:
+            i = np.where(signals.array_annotations["channel_names"] == "GVS")[0]
+            gvs = signals[:,i].magnitude
+            times = signals.times.magnitude
+    return gvs, times
+
+def getGVSStarts(gvs, times):
+    threshold = -0.11
+    starts = []
+    look = True
+    for i in range(len(gvs)):
+        if look and gvs[i]<=threshold:
+            starts.append(times[i])
+            look = False
+        if not look and gvs[i]>threshold:
+            #starts.append(times[i])
+            look = True
+    return starts
+
+def on_press(event):
+    if event.inaxes == axs[0]:
+        print("Press x : {}".format(event.xdata))
+        print("Index press : {}".format(nearestX(starts,event.xdata)))
+    # event.canvas.figure.axes[0].clear()
+    # event.canvas.figure.axes[0].hlines(1,0,times[-1])
+    # event.canvas.figure.axes[0].eventplot(starts, orientation='horizontal', colors=color)
+    # event.canvas.figure.axes[0].set(ylabel="Starts")
+    # event.canvas.draw()
+
+def on_release(event):
+    if event.inaxes == axs[0]:
+        print("Release x : {}".format(event.xdata))
+        print("Index release : {}".format(nearestX(starts,event.xdata)))
+
+def nearestX(starts, x):
+    return min(range(len(starts)), key=lambda i: abs(starts[i]-x))
+
 if __name__ == "__main__":
     filePath = "Data_thomas/230407-galv-s54-analyse/230407-galv-s54_000.smr"
     data = getDataFromSpike2(filePath)
-    plotData(data,True)
+    #plotData(data,True)
+    gvs, times = getGVS(data)
+    starts = getGVSStarts(gvs,times)
 
+    fig, axs = plt.subplots(2, sharex=True)
+    axs[0].hlines(1,0,times[-1])
+    axs[0].eventplot(starts, orientation='horizontal', colors='b')
+    axs[0].set(ylabel="Starts")
+    axs[1].plot(times, gvs)
+    axs[1].set(ylabel="GVS")
+    plt.xlabel("Time (s)")
+    plt.xlim([0, times[-1]])
+    fig.canvas.mpl_connect('button_press_event', on_press)
+    fig.canvas.mpl_connect('button_release_event', on_release)
+    plt.show()
 
-
-# print("AnalogSignal 1 : {}".format(data[0].segments[0].analogsignals[0]))
-# print(vars(data[0].segments[0].analogsignals[0]))
-# print("Event 1 : {}".format(data[0].segments[0].events[0]))
-# print(vars(data[0].segments[0].events[0]))
 
 
 
@@ -105,4 +154,13 @@ if __name__ == "__main__":
 data = 1 block
 block = 1 segment
 segment = list of analog signals + list of events
+
+On pressed
+Get the axe, get the x, get the nearest data if it's near with onPick()
+
+Between
+Draw a tmp point ?
+
+On realease
+Get the new x, change the data
 """

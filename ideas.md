@@ -5,11 +5,6 @@
 - Graphes points et un vecteur ou pas de points et plusieurs vecteurs.
 - Comparer automatiquement la stimulation à toutes les racines
 
-Choix des graphes (toujours les 6 graphes : 2 côtés et 3 racines) :
-- Un sujet dans une condition [OK]
-- Un sujet dans plusieurs conditions [OK]
-- Plusieurs sujets dans une même condition [OK]
-
 TODO :
 - Gérer les liens de fichiers de l'analyse
 - Affiner l'algo de détection de burst
@@ -18,9 +13,15 @@ TODO :
 Scripts Spike2 :
 - Artefact Suppressor
 - Burst Analysis
-- Event Counter
+- Event Counter [OK]
 - Integration (auto/manual)
 - MultiPhase
 - Overdraw
 - Phase Relationship
 - Sled-PSTH
+
+DONE :
+Choix des graphes (toujours les 6 graphes : 2 côtés et 3 racines) :
+- Un sujet dans une condition
+- Un sujet dans plusieurs conditions
+- Plusieurs sujets dans une même condition
