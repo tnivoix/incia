@@ -8,6 +8,8 @@ from neurodsp.burst import detect_bursts_dual_threshold, compute_burst_stats
 # Import utilities for loading and plotting data
 from neurodsp.plts.time_series import plot_time_series, plot_bursts
 
+tmp = 0
+starts = []
 
 def getDataFromSpike2(filePath):
     reader = Spike2IO(filename=filePath)
@@ -112,7 +114,9 @@ def getGVSStarts(gvs, times):
 def on_press(event):
     if event.inaxes == axs[0]:
         print("Press x : {}".format(event.xdata))
-        print("Index press : {}".format(nearestX(starts,event.xdata)))
+        global tmp
+        tmp = nearestX(starts,event.xdata)
+        print("Index press : {}".format(tmp))
     # event.canvas.figure.axes[0].clear()
     # event.canvas.figure.axes[0].hlines(1,0,times[-1])
     # event.canvas.figure.axes[0].eventplot(starts, orientation='horizontal', colors=color)
@@ -121,10 +125,16 @@ def on_press(event):
 
 def on_release(event):
     if event.inaxes == axs[0]:
+        global starts
         print("Release x : {}".format(event.xdata))
         print("Index release : {}".format(nearestX(starts,event.xdata)))
+        
+        starts[tmp] = event.xdata
+        p.set_positions(starts)
+        event.canvas.draw()
 
 def nearestX(starts, x):
+    #return min(enumerate(starts), key=lambda i: abs(i[1]-x))
     return min(range(len(starts)), key=lambda i: abs(starts[i]-x))
 
 if __name__ == "__main__":
@@ -136,7 +146,7 @@ if __name__ == "__main__":
 
     fig, axs = plt.subplots(2, sharex=True)
     axs[0].hlines(1,0,times[-1])
-    axs[0].eventplot(starts, orientation='horizontal', colors='b')
+    p, = axs[0].eventplot(starts, orientation='horizontal', colors='b')
     axs[0].set(ylabel="Starts")
     axs[1].plot(times, gvs)
     axs[1].set(ylabel="GVS")
@@ -163,4 +173,16 @@ Draw a tmp point ?
 
 On realease
 Get the new x, change the data
+
+
+Class ideas : (use self)
+- Figure with settings like x and y axis range, all axes
+- Axe with specific y axe range, data
+Save the plot so you can change everything you need
+
+TODO :
+- Organiser mon code en classes
+- Gérer l'affichage des signaux et events (menu avec des cases à cocher pour afficher ou non les graphes)
+- Gérer les inputs pour déplacer les events, en ajouter, en supprimer
+- Exporter sur spike2 (pas possible à priori)
 """
