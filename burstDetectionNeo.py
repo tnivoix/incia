@@ -145,23 +145,23 @@ def nearestX(starts, x):
 if __name__ == "__main__":
     filePath = "Data_thomas/230407-galv-s54-analyse/230407-galv-s54_000.smr"
     data = getDataFromSpike2(filePath)
-    plotData(data, plotEvents=False, plotSignals=True, withBurst=True)
+    # plotData(data, plotEvents=False, plotSignals=True, withBurst=True)
 
 
-    # gvs, times = getGVS(data)
-    # starts = getGVSStarts(gvs,times)
+    gvs, times = getGVS(data)
+    starts = getGVSStarts(gvs,times)
 
-    # fig, axs = plt.subplots(2, sharex=True)
-    # axs[0].hlines(1,0,times[-1])
-    # p, = axs[0].eventplot(starts, orientation='horizontal', colors='b')
-    # axs[0].set(ylabel="Starts")
-    # axs[1].plot(times, gvs)
-    # axs[1].set(ylabel="GVS")
-    # plt.xlabel("Time (s)")
-    # plt.xlim([0, times[-1]])
-    # fig.canvas.mpl_connect('button_press_event', on_press)
-    # fig.canvas.mpl_connect('button_release_event', on_release)
-    # plt.show()
+    fig, axs = plt.subplots(2, sharex=True)
+    axs[0].hlines(1,0,times[-1])
+    p, = axs[0].eventplot(starts, orientation='horizontal', colors='b')
+    axs[0].set(ylabel="Starts")
+    axs[1].plot(times, gvs)
+    axs[1].set(ylabel="GVS")
+    plt.xlabel("Time (s)")
+    plt.xlim([0, times[-1]])
+    fig.canvas.mpl_connect('button_press_event', on_press)
+    fig.canvas.mpl_connect('button_release_event', on_release)
+    plt.show()
 
 
 
@@ -188,8 +188,9 @@ Class ideas : (use self)
 Save the plot so you can change everything you need
 
 TODO :
-- Organiser mon code en classes
+- Organiser mon code en classes [OK]
 - Gérer l'affichage des signaux et events (menu avec des cases à cocher pour afficher ou non les graphes)
+- Revoir l'affichage des bursts (xlabel)
 - Gérer les inputs pour déplacer les events, en ajouter, en supprimer
-- Exporter sur spike2 (pas possible à priori)
+- Exporter sur spike2 (pas possible à priori, voir export matlab)
 """
