@@ -19,3 +19,9 @@ class Color(Enum):
     orange = 1
     green = 2
     purple = 3
+    red = 4
+    yellow = 5
+    brown = 6
+    pink = 7
+    gray = 8
+    olive = 9
