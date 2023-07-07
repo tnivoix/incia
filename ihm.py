@@ -110,7 +110,7 @@ class PageThree(tk.Frame):
                             command=lambda: controller.show_frame(StartPage))
         button1.pack()
 
-        fig = Figure(3, ["Ax1", "Ax2", "Ax3"])
+        fig = MyFigure(3, ["Ax1", "Ax2", "Ax3"])
         x1 = np.array([0, 1, 2, 3])
         y1 = np.array([5, 2, 8, 6])
         fig.subplots["Ax1"].setData(x1, y1)

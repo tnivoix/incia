@@ -1,17 +1,18 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
 from matplotlib.widgets import Button, RadioButtons, CheckButtons
 import matplotlib.colors as mcolors
 from abc import ABC, abstractmethod
  
-class Figure:
+class MyFigure:
     def __init__(self, nbRows, subplotNames):
-        self.fig = plt.figure()
+        self.fig = Figure(figsize=(5,5), dpi=100)
         self.fig.subplots_adjust(right=0.9, bottom=0.25)
         self.nbRows = nbRows
         self.gs = self.fig.add_gridspec(3, 2, width_ratios=[5,1])
         self.subplots = self.setupSubplots(subplotNames)
-        plt.tight_layout()
+        self.fig.tight_layout()
 
     def setupSubplots(self, subplotNames):
         subplots = {}
@@ -35,7 +36,7 @@ class Figure:
     def show(self):
         for subplot in self.subplots.values():
             subplot.plot()
-        plt.tight_layout()
+        self.fig.tight_layout()
         plt.show()
 
     def draw(self):
@@ -90,20 +91,20 @@ class Button(Subplot):
         pass
 
 
-if __name__ == "__main__":
-    fig = Figure(3, ["Ax1", "Ax2", "Ax3"])
+# if __name__ == "__main__":
+#     fig = MyFigure(3, ["Ax1", "Ax2", "Ax3"])
 
-    x1 = np.array([0, 1, 2, 3])
-    y1 = np.array([5, 2, 8, 6])
-    fig.subplots["Ax1"].setData(x1, y1)
+#     x1 = np.array([0, 1, 2, 3])
+#     y1 = np.array([5, 2, 8, 6])
+#     fig.subplots["Ax1"].setData(x1, y1)
     
-    x2 = np.array([0, 1, 2, 3])
-    y2 = np.array([10, 2, 0, 12])
-    fig.subplots["Ax2"].setData(x2, y2)
+#     x2 = np.array([0, 1, 2, 3])
+#     y2 = np.array([10, 2, 0, 12])
+#     fig.subplots["Ax2"].setData(x2, y2)
     
-    x3 = np.array([0, 1, 2, 3])
-    y3 = np.array([0, 3, 2, 19])
-    fig.subplots["Ax3"].setData(x3, y3)
+#     x3 = np.array([0, 1, 2, 3])
+#     y3 = np.array([0, 3, 2, 19])
+#     fig.subplots["Ax3"].setData(x3, y3)
 
     
-    fig.show()
+#     fig.show()
