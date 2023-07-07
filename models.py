@@ -178,7 +178,7 @@ class File:
                 # Test if the actual phase time is far away for the previous one
                 if data.iloc[i, 0] - data.iloc[i - 1, 0] > 10:
                     # Select the phase to deletion
-                    row_to_delete.append(i)
+                    row_to_delete.append(i-1)
                     # Change cycle
                     phase_tmp += 1
             # Write the cycle number in a tmp array
@@ -187,7 +187,7 @@ class File:
         # Add cycle number to all phases
         data["Phase_Number"] = phase_numbers
 
-        # Remove useful data between phases
+        # Remove useless data between phases
         data = data.drop(row_to_delete)
 
         # Change angles to degree
@@ -220,31 +220,34 @@ class File:
         self.mean = circmean(self.data)
 
     def printStats(self):
-        # Nb phases
-        n = len(self.data)
-        # Mean vector
-        mean = circmean(self.data)
-        # Mean vector length
-        r = 1 - circvar(self.data)
-        # Rayleigh test Z
-        Z = n * r * r
-        # Rayleigh test p
-        p = rayleightest(self.data)
-        # Rao's spacing test U
-        u = 0
-        for i in range(n):
-            t = 0
-            if i == n - 1:
-                t = 2 * np.pi - self.data[i] + self.data[0]
-            else:
-                t = self.data[i + 1] - self.data[i]
-            u += abs(t - 2 * np.pi / n)
-        u = 0.5 * u
+        if len(self.data) > 0:
+            # Nb phases
+            n = len(self.data)
+            # Mean vector
+            mean = circmean(self.data)
+            # Mean vector length
+            r = 1 - circvar(self.data)
+            # Rayleigh test Z
+            Z = n * r * r
+            # Rayleigh test p
+            p = rayleightest(self.data)
+            # Rao's spacing test U
+            u = 0
+            for i in range(n):
+                t = 0
+                if i == n - 1:
+                    t = 2 * np.pi - self.data[i] + self.data[0]
+                else:
+                    t = self.data[i + 1] - self.data[i]
+                u += abs(t - 2 * np.pi / n)
+            u = 0.5 * u
 
-        print("Name : {}".format(self.getFileName()))
-        print("Number of observations : {}".format(n))
-        print("Mean vector : {}".format(np.rad2deg(mean)))
-        print("Length of mean vector : {}".format(r))
-        print("Rayleigh test (Z) : {}".format(Z))
-        print("Rayleigh test (p) : {}".format(p))
-        print("Rao's spacing test (U) : {}".format(np.rad2deg(u)))
+            print("Name : {}".format(self.getFileName()))
+            print("Number of observations : {}".format(n))
+            print("Mean vector : {}".format(np.rad2deg(mean)))
+            print("Length of mean vector : {}".format(r))
+            print("Rayleigh test (Z) : {}".format(Z))
+            print("Rayleigh test (p) : {}".format(p))
+            print("Rao's spacing test (U) : {}".format(np.rad2deg(u)))
+        else:
+            print("File empty")

@@ -74,6 +74,7 @@ if __name__ == "__main__":
         elif choice == 2:
             folders = getAllFolders(directory)
             for folder in folders:
+                folder.printFolderStats()
                 folder.displayFolderGraph()
         elif choice == 3:
             folders = getAllFolders(directory)

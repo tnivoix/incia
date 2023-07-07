@@ -39,7 +39,15 @@ La manip sort des fichiers smr avec la date, le spécimen et l'incrémentation s
 Import des fichiers smr dans python pour une première détection automatique de burst (début et fin).
 Affinage à la main par l'utilisateur des starts et ends.
 Calculs des phases et analyses des bursts (starts, end, période, évenement à l'intérieur des bursts)
+Choix des comparaisons des graphes.
+//Calculs des autres scripts dans python.
 Export du fichier modifié dans python.
 
-Choix des comparaisons des graphes.
-Calculs des autres scripts dans python.
+
+Premier test pvalue < 0.05
+Deuxième test deux populations oposées
+Prendre en compte le type de stim (c,g,h...)
+
+Conception des interfaces et des switchs entre elles
+
+Prendre les preps strictements inférieures à s56
