@@ -1,40 +1,55 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
-from matplotlib.widgets import Button, RadioButtons, CheckButtons
+from matplotlib.widgets import CheckButtons
+import matplotlib.gridspec as gridspec
 import matplotlib.colors as mcolors
-from abc import ABC, abstractmethod
  
-class MyFigure:
-    def __init__(self, nbRows, subplotNames):
+class Spike2Figure:
+    def __init__(self, nbSignals, signalNames):
         self.fig = Figure(figsize=(5,5), dpi=100)
-        self.fig.subplots_adjust(right=0.9, bottom=0.25)
-        self.nbRows = nbRows
-        self.gs = self.fig.add_gridspec(3, 2, width_ratios=[5,1])
-        self.subplots = self.setupSubplots(subplotNames)
+        #self.fig.subplots_adjust(right=0.9, bottom=0.25)
+        self.nbSignals = nbSignals
+        self.gs = self.fig.add_gridspec(nbSignals, 2, width_ratios=[5,1])
+        self.signals = self.setupSignals(signalNames)
+        self.showButton = self.setupShowButton(signalNames)
         self.fig.tight_layout()
 
-    def setupSubplots(self, subplotNames):
-        subplots = {}
-        for i in range(self.nbRows):
-            subplots[subplotNames[i]] = Row(self, self.fig.add_subplot(self.gs[i, 0]), subplotNames[i])
-            subplots[subplotNames[i]].setColor(list(mcolors.TABLEAU_COLORS.values())[i])
-        subplots["ButtonVisible"] = Button(self, self.fig.add_subplot(self.gs[:, 1]), [True]*self.nbRows, subplotNames)
-        return subplots
+    def setupSignals(self, signalNames):
+        signals = {}
+        for i in range(self.nbSignals):
+            sharex = None
+            if i > 0:
+                sharex = signals[signalNames[i-1]].ax
+            signals[signalNames[i]] = Signal(self, self.fig.add_subplot(self.gs[i, 0], sharex = sharex), signalNames[i], list(mcolors.TABLEAU_COLORS.values())[i])
+            if i < self.nbSignals -1:
+                signals[signalNames[i]].ax.get_xaxis().set_visible(False)
+        return signals
     
-    def inverseVisible(self, subplotName):
-        self.subplots[subplotName].inverseVisible()
+    def setupShowButton(self, signalNames):
+        self.showButton = Button(self, self.fig.add_subplot(self.gs[:, 1]), [True]*self.nbSignals, signalNames)
+
+    def inverseVisible(self, signalName):
+        self.signals[signalName].inverseVisible()
+
+    def getVisibleSignals(self):
+        signals = {}
+        for key, value in self.signals.items():
+            if value.visible:
+                signals[key] = value
+        return signals
 
     def arrangeRows(self):
-        ratios = self.gs.get_height_ratios()
-        for i in range(len(ratios)):
-            ratios[i] = 1 if list(self.subplots.values())[i].visible else 0
-        self.gs.set_height_ratios(ratios)
-        for i in range(len(ratios)):
-            list(self.subplots.values())[i].ax.set_position(self.gs[i,0].get_position(self.fig))
-
+        visibleSignals = self.getVisibleSignals()
+        if len(visibleSignals) > 0:
+            newGs = gridspec.GridSpec(len(visibleSignals),2, width_ratios=[5,1])
+            i = 0
+            for signal in visibleSignals.values():
+                signal.ax.set_position(newGs[i,0].get_position(self.fig))
+                i += 1
+      
     def show(self):
-        for subplot in self.subplots.values():
+        for subplot in self.signals.values():
             subplot.plot()
         self.fig.tight_layout()
         plt.show()
@@ -42,30 +57,19 @@ class MyFigure:
     def draw(self):
         self.fig.canvas.draw()
 
-class Subplot(ABC):
-    def __init__(self, fig, ax):
+class Signal():
+    def __init__(self, fig, ax, name, color):
         self.fig = fig
         self.ax = ax
-
-    @abstractmethod
-    def plot(self):
-        pass
-
-class Row(Subplot):
-    def __init__(self, fig, ax, name):
-        super().__init__(fig,ax)
         self.name = name
         self.visible = True
         self.dataX = []
         self.dataY = []
-        self.color = "blue"
+        self.color = color
 
     def setData(self, dataX, dataY):
         self.dataX = dataX
         self.dataY = dataY
-    
-    def setColor(self, color):
-        self.color = color
     
     def inverseVisible(self):
         self.visible = not self.visible
@@ -74,21 +78,19 @@ class Row(Subplot):
     def plot(self):
         self.ax.plot(self.dataX, self.dataY, color=self.color, marker="o")
 
-class Button(Subplot):
+class Button():
     def __init__(self, fig, ax, label, buttonNames):
-        super().__init__(fig,ax)
+        self.fig = fig
+        self.ax = ax
         self.label = label
         self.buttonNames = buttonNames
-        self.p = CheckButtons(ax, buttonNames, label)
-        self.p.on_clicked(self.onClicked)
+        self.p = CheckButtons(ax, buttonNames, label).on_clicked(self.onClicked)
     
     def onClicked(self, label):
+        print(label)
         self.fig.inverseVisible(label)
         self.fig.arrangeRows()
         self.fig.draw()
-
-    def plot(self):
-        pass
 
 
 # if __name__ == "__main__":
