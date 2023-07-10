@@ -145,23 +145,23 @@ def nearestX(starts, x):
 if __name__ == "__main__":
     filePath = "Data_thomas/230407-galv-s54-analyse/230407-galv-s54_000.smr"
     data = getDataFromSpike2(filePath)
-    # plotData(data, plotEvents=False, plotSignals=True, withBurst=True)
+    plotData(data, plotEvents=False, plotSignals=True, withBurst=True)
 
 
-    gvs, times = getGVS(data)
-    starts = getGVSStarts(gvs,times)
+    # gvs, times = getGVS(data)
+    # starts = getGVSStarts(gvs,times)
 
-    fig, axs = plt.subplots(2, sharex=True)
-    axs[0].hlines(1,0,times[-1])
-    p, = axs[0].eventplot(starts, orientation='horizontal', colors='b')
-    axs[0].set(ylabel="Starts")
-    axs[1].plot(times, gvs)
-    axs[1].set(ylabel="GVS")
-    plt.xlabel("Time (s)")
-    plt.xlim([0, times[-1]])
-    fig.canvas.mpl_connect('button_press_event', on_press)
-    fig.canvas.mpl_connect('button_release_event', on_release)
-    plt.show()
+    # fig, axs = plt.subplots(2, sharex=True)
+    # axs[0].hlines(1,0,times[-1])
+    # p, = axs[0].eventplot(starts, orientation='horizontal', colors='b')
+    # axs[0].set(ylabel="Starts")
+    # axs[1].plot(times, gvs)
+    # axs[1].set(ylabel="GVS")
+    # plt.xlabel("Time (s)")
+    # plt.xlim([0, times[-1]])
+    # fig.canvas.mpl_connect('button_press_event', on_press)
+    # fig.canvas.mpl_connect('button_release_event', on_release)
+    # plt.show()
 
 
 

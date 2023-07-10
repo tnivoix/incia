@@ -1,0 +1,9 @@
+neo
+matplotlib
+numpy
+neurodsp
+scipy
+tk
+pandas
+astropy
+openpyxl
