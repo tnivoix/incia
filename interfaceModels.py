@@ -8,7 +8,7 @@ import matplotlib.colors as mcolors
 class Spike2Figure:
     def __init__(self, nbSignals, signalNames):
         self.fig = Figure(figsize=(5,5), dpi=100)
-        #self.fig.subplots_adjust(right=0.9, bottom=0.25)
+        self.fig.subplots_adjust(right=0.9, bottom=0.25)
         self.nbSignals = nbSignals
         self.gs = self.fig.add_gridspec(nbSignals, 2, width_ratios=[5,1])
         self.signals = self.setupSignals(signalNames)
@@ -27,7 +27,7 @@ class Spike2Figure:
         return signals
     
     def setupShowButton(self, signalNames):
-        self.showButton = Button(self, self.fig.add_subplot(self.gs[:, 1]), [True]*self.nbSignals, signalNames)
+        return Button(self, self.fig.add_subplot(self.gs[:, 1]), [True]*self.nbSignals, signalNames)
 
     def inverseVisible(self, signalName):
         self.signals[signalName].inverseVisible()
@@ -46,13 +46,9 @@ class Spike2Figure:
             i = 0
             for signal in visibleSignals.values():
                 signal.ax.set_position(newGs[i,0].get_position(self.fig))
+                signal.ax.get_xaxis().set_visible(False)
                 i += 1
-      
-    def show(self):
-        for subplot in self.signals.values():
-            subplot.plot()
-        self.fig.tight_layout()
-        plt.show()
+            list(visibleSignals.values())[-1].ax.get_xaxis().set_visible(True)
 
     def draw(self):
         self.fig.canvas.draw()
@@ -84,10 +80,10 @@ class Button():
         self.ax = ax
         self.label = label
         self.buttonNames = buttonNames
-        self.p = CheckButtons(ax, buttonNames, label).on_clicked(self.onClicked)
+        self.p = CheckButtons(ax, buttonNames, label)
+        self.p.on_clicked(self.onClicked)
     
     def onClicked(self, label):
-        print(label)
         self.fig.inverseVisible(label)
         self.fig.arrangeRows()
         self.fig.draw()
