@@ -1,7 +1,18 @@
-import numpy as np
+import seaborn as sns
+import matplotlib.pyplot as plt
 
-a=np.arange(1,4)
-a =a[:,None]
-print(a)
+sns.set_theme(style="whitegrid")
 
-print(a[None, :])
+# Load the example Titanic dataset
+titanic = sns.load_dataset("titanic")
+
+# Set up a grid to plot survival probability against several variables
+g = sns.PairGrid(titanic, y_vars="survived",
+                 x_vars=["class", "sex", "who", "alone"],
+                 height=5, aspect=.5)
+
+# Draw a seaborn pointplot onto each Axes
+g.map(sns.pointplot, scale=1.3, errwidth=10, color="xkcd:plum")
+g.set(ylim=(0, 1))
+sns.despine(fig=g.fig, left=True)
+plt.show()

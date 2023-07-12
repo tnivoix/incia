@@ -3,8 +3,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
-import plotly.express as px
-import plotly.graph_objects as go
 
 
 def getDataFromSpike2(filePath):
@@ -26,11 +24,11 @@ for signals in data.analogsignals:
         values = signals[:,j].magnitude
 
         if name == "GVS":
-             gvsDf.index = signals.times.magnitude
+             gvsDf['Times'] = signals.times.magnitude
              gvsDf[name] = values
         else:
              if signalsDf.empty:
-                signalsDf.index = signals.times.magnitude
+                signalsDf['Times'] = signals.times.magnitude
              signalsDf[name] = values
 
 for event in data.events:
@@ -40,11 +38,43 @@ for event in data.events:
     tmpDf = pd.DataFrame({name:values})
     eventsDf = pd.concat([eventsDf, tmpDf], axis = 1)
 
-sample = signalsDf.sample(1000)
+def getGVSStarts(gvsDf):
+    threshold = -0.11
+    starts = []
+    look = True
+    for i in range(len(gvsDf['GVS'])):
+        if look and gvsDf['GVS'][i]<=threshold:
+            starts.append(gvsDf['Times'][i])
+            look = False
+        if not look and gvsDf['GVS'][i]>threshold:
+            #starts.append(times[i])
+            look = True
+    starts = pd.DataFrame({"Start":starts})
+    return starts
+
+s = getGVSStarts(gvsDf)
+
+plt.figure(figsize=(8,4))
+sns.set_style('darkgrid')
+#g = sns.lineplot(data = s, x="Start", y=[1]*len(s), linestyle='', marker=6, markersize=20, markerfacecolor='red')
+g = sns.lineplot(x=gvsDf['Times'], y=gvsDf['GVS'])
+g.eventplot(s["Start"], orientation='horizontal', colors='g', lineoffsets=0)
+g.set(xlim=(0, gvsDf['Times'].iloc[-1]))
+#g.axhline(1)
+plt.show()
+
+
+# yf   = rfft(np.array(signalsDf['Lvr-Rost']))
+# yf_abs      = np.abs(yf) 
+# indices     = yf_abs>300   # filter out those value under 300
+# yf_clean    = indices * yf # noise frequency will be set to 0
+# clean = irfft(yf_clean)
+
+#sample = signalsDf
+
 # plt.figure(figsize=(8,4))
 # sns.set_style('darkgrid')
-# sns.lineplot(data=sample, y='Lvr-Rost', x =sample.index, markersize=0.5)
+# #sns.lineplot(x='Times', y='value', hue='variable', data=pd.melt(signalsDf, ['Times']))
+# #sns.lineplot(x=signalsDf['Times'], y=signalsDf['Lvr-Rost'])
+# #sns.lineplot(x=sample['Times'], y=sample['Lvr-Rost'])
 # plt.show()
-
-fig = px.line(sample, x=sample.index, y='Lvr-Rost')
-fig.show()
