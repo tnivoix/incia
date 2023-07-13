@@ -54,12 +54,23 @@ def getGVSStarts(gvsDf):
 
 s = getGVSStarts(gvsDf)
 
-plt.figure(figsize=(8,4))
+fig, ax = plt.subplots()
 sns.set_style('darkgrid')
 #g = sns.lineplot(data = s, x="Start", y=[1]*len(s), linestyle='', marker=6, markersize=20, markerfacecolor='red')
-g = sns.lineplot(x=gvsDf['Times'], y=gvsDf['GVS'])
-g.eventplot(s["Start"], orientation='horizontal', colors='g', lineoffsets=0)
-g.set(xlim=(0, gvsDf['Times'].iloc[-1]))
+sns.lineplot(x=gvsDf['Times'], y=gvsDf['GVS'], ax=ax)
+ax.eventplot(s["Start"], orientation='horizontal', colors='g', lineoffsets=0, picker=True, pickradius=5)
+ax.set(xlim=(0, gvsDf['Times'].iloc[-1]))
+
+def onpick(event):
+    thisline = event.artist
+    xdata = thisline.get_xdata()
+    ydata = thisline.get_ydata()
+    ind = event.ind
+    points = tuple(zip(xdata[ind], ydata[ind]))
+    print('onpick points:', points)
+
+
+fig.canvas.mpl_connect('pick_event', onpick)
 #g.axhline(1)
 plt.show()
 
