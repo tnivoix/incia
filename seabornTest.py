@@ -16,7 +16,6 @@ def getDataFromSpike2(filePath):
 def fromDataToDf(data):
     gvsDf = pd.DataFrame()
     signalsDf = pd.DataFrame()
-    eventsDf = pd.DataFrame()
 
     for signals in data.analogsignals:
         for j in range(len(signals.array_annotations["channel_ids"])):
@@ -31,90 +30,102 @@ def fromDataToDf(data):
                     signalsDf['Times'] = signals.times.magnitude
                 signalsDf[name] = values
 
+    starts = {}
     for event in data.events:
         name = event.name
         values = event.magnitude
-        
-        tmpDf = pd.DataFrame({name:values})
-        eventsDf = pd.concat([eventsDf, tmpDf], axis = 1)
+        starts[name] = values
     
-    return gvsDf, signalsDf, eventsDf
+    return gvsDf, signalsDf, starts
 
 def getGVSStartsEnds(gvsDf):
+    global starts
+    global ends
     threshold = -0.001
-    starts = []
-    ends = []
+    s = []
+    e = []
     lookStart = True
     lookEnd = False 
     for i in range(len(gvsDf['GVS'])):
         if lookStart and gvsDf['GVS'][i]<=threshold:
-            starts.append(gvsDf['Times'][i])
+            s.append(gvsDf['Times'][i])
             lookStart = False
         if not lookStart and gvsDf['GVS'][i]>threshold:
             lookStart = True
 
         if lookEnd and gvsDf['GVS'][i]<= -threshold:
-            ends.append(gvsDf['Times'][i])
+            e.append(gvsDf['Times'][i])
             lookEnd = False
         if not lookEnd and gvsDf['GVS'][i]> -threshold:
             lookEnd = True
-    return starts, ends
+    starts["GVS"] = s
+    ends["GVS"] = e
+
 
 def onpress(event):
     if event.inaxes and event.button == 2:
+        axLabel = event.inaxes.yaxis.get_label().get_text()
         if event.ydata >= 0:
-            global s
-            s.append(event.xdata)
-            s.sort()
-            startEvents.set_positions(s)
+            global starts
+            starts[axLabel].append(event.xdata)
+            starts[axLabel].sort()
+            startPlots[axLabel].set_positions(starts[axLabel])
         else:
-            global e
-            e.append(event.xdata)
-            e.sort()
-            endEvents.set_positions(e)
+            global ends
+            ends[axLabel].append(event.xdata)
+            ends[axLabel].sort()
+            endPlots[axLabel].set_positions(ends[axLabel])
         event.canvas.draw()
 
 
 def onpick(event):
+    axLabel = event.mouseevent.inaxes.yaxis.get_label().get_text()
     if event.mouseevent.button == 1:
-        global tmp
+        global index
         global label
+        global axe
         eventsArtist = event.artist
-        tmp = event.ind[0]
+        index = event.ind[0]
         label = eventsArtist.get_label()
-        value = eventsArtist.get_positions()[tmp]
-        print("Event {} : {}".format(tmp, value))
+        axe = axLabel
+
+        value = eventsArtist.get_positions()[index]
+        print("Event {} : {} on axe {} : {}".format(index, value, axe, label))
     if event.mouseevent.button == 3:
         eventsArtist = event.artist
         if eventsArtist.get_label() == "Starts":
-            global s
+            global starts
             i = event.ind[0]
-            del s[i]
-            startEvents.set_positions(s)
+            
+
+            del starts[axLabel][i]
+            startPlots[axLabel].set_positions(starts[axLabel])
         if eventsArtist.get_label() == "Ends":
-            global e
+            global ends
             i = event.ind[0]
-            del e[i]
-            endEvents.set_positions(e)
+            del ends[axLabel][i]
+            endPlots[axLabel].set_positions(ends[axLabel])
         event.canvas.draw()
 
 def onrelease(event):
-    global s
-    global e
-    global tmp
+    global starts
+    global ends
+    global index
     global label
-    if tmp:
+    global axe
+    if axe == event.inaxes.yaxis.get_label().get_text():
         if label == "Starts":
-            s[tmp] = event.xdata
-            s.sort()
-            startEvents.set_positions(s)
+            starts[axe][index] = event.xdata
+            starts[axe].sort()
+            startPlots[axe].set_positions(starts[axe])
         if label == "Ends":
-            e[tmp] = event.xdata
-            e.sort()
-            endEvents.set_positions(e)
+            ends[axe][index] = event.xdata
+            ends[axe].sort()
+            endPlots[axe].set_positions(ends[axe])
 
-        tmp = None
+        index = None
         label = None
+        axe = None
         event.canvas.draw()
 
 
@@ -124,22 +135,38 @@ if __name__ == "__main__":
     # GET
     filePath = "Data_thomas/230407-galv-s54-analyse/230407-galv-s54_000.smr"
     data = getDataFromSpike2(filePath)
-    gvsDf, signalsDf, eventsDf = fromDataToDf(data)
-    s, e = getGVSStartsEnds(gvsDf)
+    gvsDf, signalsDf, oldStarts = fromDataToDf(data)
+    starts = {}
+    ends = {}
+    getGVSStartsEnds(gvsDf)
 
-    tmp = None
+    for name in signalsDf.keys():
+        print(name)
+
+    index = None
     label = None
+    axe = None
+
+    startPlots = {}
+    endPlots = {}
 
     # PRINT
-    fig, ax = plt.subplots()
     sns.set_style('darkgrid')
+    fig, (ax1, ax2) = plt.subplots(2, sharex=True)
 
-    sns.lineplot(x=gvsDf['Times'], y=gvsDf['GVS'], ax=ax)
-    startEvents, = ax.eventplot(s, orientation='horizontal', colors='g', lineoffsets=0.25, linelengths=0.5, picker=True, pickradius=5, label="Starts")
-    endEvents, = ax.eventplot(e, orientation='horizontal', colors='r', lineoffsets=-0.25, linelengths=0.5, picker=True, pickradius=5, label="Ends")
 
-    ax.set(xlim=(0, gvsDf['Times'].iloc[-1]))
+    sns.lineplot(x=gvsDf['Times'], y=gvsDf['GVS'], ax=ax1)
+    startPlots["GVS"], = ax1.eventplot(starts["GVS"], orientation='horizontal', colors='g', lineoffsets=0.25, linelengths=0.5, picker=True, pickradius=5, label="Starts")
+    endPlots["GVS"], = ax1.eventplot(ends["GVS"], orientation='horizontal', colors='r', lineoffsets=-0.25, linelengths=0.5, picker=True, pickradius=5, label="Ends")
+
+    # sns.lineplot(x=signalsDf['Times'], y=signalsDf['Lvr-Rost'], ax=ax2)
+    # startPlots["GVS"], = ax2.eventplot(starts["GVS"], orientation='horizontal', colors='g', lineoffsets=0.25, linelengths=0.5, picker=True, pickradius=5, label="Starts")
+    # endPlots["GVS"], = ax2.eventplot(ends["GVS"], orientation='horizontal', colors='r', lineoffsets=-0.25, linelengths=0.5, picker=True, pickradius=5, label="Ends")
+
+    ax1.set(xlim=(0, gvsDf['Times'].iloc[-1]))
     fig.canvas.mpl_connect('pick_event', onpick)
     fig.canvas.mpl_connect('button_press_event', onpress)
     fig.canvas.mpl_connect('button_release_event', onrelease)
     plt.show()
+
+    # TODO : creates starts and ends for 6 signals
