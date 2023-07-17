@@ -40,37 +40,81 @@ def fromDataToDf(data):
     
     return gvsDf, signalsDf, eventsDf
 
-def getGVSStarts(gvsDf):
-    threshold = -0.11
+def getGVSStartsEnds(gvsDf):
+    threshold = -0.001
     starts = []
-    look = True
+    ends = []
+    lookStart = True
+    lookEnd = False 
     for i in range(len(gvsDf['GVS'])):
-        if look and gvsDf['GVS'][i]<=threshold:
+        if lookStart and gvsDf['GVS'][i]<=threshold:
             starts.append(gvsDf['Times'][i])
-            look = False
-        if not look and gvsDf['GVS'][i]>threshold:
-            #starts.append(times[i])
-            look = True
-    return starts
+            lookStart = False
+        if not lookStart and gvsDf['GVS'][i]>threshold:
+            lookStart = True
+
+        if lookEnd and gvsDf['GVS'][i]<= -threshold:
+            ends.append(gvsDf['Times'][i])
+            lookEnd = False
+        if not lookEnd and gvsDf['GVS'][i]> -threshold:
+            lookEnd = True
+    return starts, ends
+
+def onpress(event):
+    if event.inaxes and event.button == 2:
+        if event.ydata >= 0:
+            global s
+            s.append(event.xdata)
+            s.sort()
+            startEvents.set_positions(s)
+        else:
+            global e
+            e.append(event.xdata)
+            e.sort()
+            endEvents.set_positions(e)
+        event.canvas.draw()
 
 
 def onpick(event):
-    global tmp
-    eventsArtist = event.artist
-    tmp = event.ind[0]
-    value = eventsArtist.get_positions()[tmp]
-    print("Event {} : {}".format(tmp, value))
+    if event.mouseevent.button == 1:
+        global tmp
+        global label
+        eventsArtist = event.artist
+        tmp = event.ind[0]
+        label = eventsArtist.get_label()
+        value = eventsArtist.get_positions()[tmp]
+        print("Event {} : {}".format(tmp, value))
+    if event.mouseevent.button == 3:
+        eventsArtist = event.artist
+        if eventsArtist.get_label() == "Starts":
+            global s
+            i = event.ind[0]
+            del s[i]
+            startEvents.set_positions(s)
+        if eventsArtist.get_label() == "Ends":
+            global e
+            i = event.ind[0]
+            del e[i]
+            endEvents.set_positions(e)
+        event.canvas.draw()
 
-
-def onRelease(event):
+def onrelease(event):
     global s
+    global e
     global tmp
+    global label
     if tmp:
-        s[tmp] = event.xdata
-        s.sort()
-        startEvents.set_positions(s)
+        if label == "Starts":
+            s[tmp] = event.xdata
+            s.sort()
+            startEvents.set_positions(s)
+        if label == "Ends":
+            e[tmp] = event.xdata
+            e.sort()
+            endEvents.set_positions(e)
 
         tmp = None
+        label = None
         event.canvas.draw()
 
 
@@ -81,17 +125,21 @@ if __name__ == "__main__":
     filePath = "Data_thomas/230407-galv-s54-analyse/230407-galv-s54_000.smr"
     data = getDataFromSpike2(filePath)
     gvsDf, signalsDf, eventsDf = fromDataToDf(data)
-    s = getGVSStarts(gvsDf)
+    s, e = getGVSStartsEnds(gvsDf)
+
     tmp = None
+    label = None
 
     # PRINT
     fig, ax = plt.subplots()
     sns.set_style('darkgrid')
 
-    #sns.lineplot(x=gvsDf['Times'], y=gvsDf['GVS'], ax=ax)
-    startEvents, = ax.eventplot(s, orientation='horizontal', colors='g', lineoffsets=0, picker=True, pickradius=5)
+    sns.lineplot(x=gvsDf['Times'], y=gvsDf['GVS'], ax=ax)
+    startEvents, = ax.eventplot(s, orientation='horizontal', colors='g', lineoffsets=0.25, linelengths=0.5, picker=True, pickradius=5, label="Starts")
+    endEvents, = ax.eventplot(e, orientation='horizontal', colors='r', lineoffsets=-0.25, linelengths=0.5, picker=True, pickradius=5, label="Ends")
 
     ax.set(xlim=(0, gvsDf['Times'].iloc[-1]))
     fig.canvas.mpl_connect('pick_event', onpick)
-    fig.canvas.mpl_connect('button_release_event', onRelease)
+    fig.canvas.mpl_connect('button_press_event', onpress)
+    fig.canvas.mpl_connect('button_release_event', onrelease)
     plt.show()
