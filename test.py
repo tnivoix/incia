@@ -37,7 +37,7 @@ def onclick(event):
             pass # Do nothing
 
 
-def onpick(event):    
+def onpick(event):
     """
     Handles the pick event - if an object has been picked, store a
     reference to it.  We do this by simply adding a reference to it
