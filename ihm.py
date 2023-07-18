@@ -9,6 +9,7 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolb
 import tkinter as tk
 from tkinter import ttk
 from interfaceModels import *
+from spike2Fig import *
 
 from neo.io import Spike2IO
 
@@ -83,15 +84,11 @@ class Spike2Page(tk.Frame):
                             command=lambda: self.openSpike2File())
         button2.pack()
 
-    def getDataFromSpike2(self, filePath):
-        reader = Spike2IO(filename=filePath)
-        data = reader.read()
-        print("File {} read".format(filePath))
-        return data[0].segments[0]
+   
 
     def openSpike2File(self):
         filePath = "Data_thomas/230407-galv-s54-analyse/230407-galv-s54_000.smr"
-        data = self.getDataFromSpike2(filePath)
+        data = getDataFromSpike2(filePath)
         names = []
         for signals in data.analogsignals:
             names += signals.array_annotations["channel_names"].tolist()
