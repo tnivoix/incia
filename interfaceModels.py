@@ -1,5 +1,3 @@
-import numpy as np
-import matplotlib.pyplot as plt
 from matplotlib.figure import Figure
 from matplotlib.widgets import CheckButtons
 import matplotlib.gridspec as gridspec
@@ -87,22 +85,3 @@ class Button():
         self.fig.inverseVisible(label)
         self.fig.arrangeRows()
         self.fig.draw()
-
-
-# if __name__ == "__main__":
-#     fig = MyFigure(3, ["Ax1", "Ax2", "Ax3"])
-
-#     x1 = np.array([0, 1, 2, 3])
-#     y1 = np.array([5, 2, 8, 6])
-#     fig.subplots["Ax1"].setData(x1, y1)
-    
-#     x2 = np.array([0, 1, 2, 3])
-#     y2 = np.array([10, 2, 0, 12])
-#     fig.subplots["Ax2"].setData(x2, y2)
-    
-#     x3 = np.array([0, 1, 2, 3])
-#     y3 = np.array([0, 3, 2, 19])
-#     fig.subplots["Ax3"].setData(x3, y3)
-
-    
-#     fig.show()

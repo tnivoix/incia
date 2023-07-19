@@ -1,17 +1,16 @@
 # The code for changing pages was derived from: http://stackoverflow.com/questions/7546050/switch-between-two-frames-in-tkinter
 # License: http://creativecommons.org/licenses/by-sa/3.0/	
 
-import matplotlib
-matplotlib.use("TkAgg")
+import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
-#from matplotlib.figure import Figure
+import matplotlib
 
+from interfaceModels import Spike2Figure
+matplotlib.use('TkAgg', force=True)
 import tkinter as tk
 from tkinter import ttk
-from interfaceModels import *
-from spike2Fig import *
-
-from neo.io import Spike2IO
+#from interfaceModels import *
+from spike2Fig import Spike2Fig
 
 
 LARGE_FONT= ("Verdana", 12)
@@ -84,28 +83,32 @@ class Spike2Page(tk.Frame):
                             command=lambda: self.openSpike2File())
         button2.pack()
 
-   
+    def onpick(self, event):
+        self.myFig.onpick(event)
+
+    def onpress(self, event):
+        self.myFig.onpress(event)
+
+    def onrelease(self, event):
+        self.myFig.onrelease(event)
 
     def openSpike2File(self):
+        self.myFig = Spike2Fig()
         filePath = "Data_thomas/230407-galv-s54-analyse/230407-galv-s54_000.smr"
-        data = getDataFromSpike2(filePath)
-        names = []
-        for signals in data.analogsignals:
-            names += signals.array_annotations["channel_names"].tolist()
-        fig = Spike2Figure(len(names), names)
+        self.myFig.getCleanData(filePath)
+        self.myFig.getGVSStartsEnds()
+        self.myFig.setupFig()
+        
 
-        i = 0
-        for signals in data.analogsignals:
-            for j in range(len(signals.array_annotations["channel_ids"])):
-                fig.signals[names[i]].setData(signals.times.magnitude, signals[:,j].magnitude)
-                fig.signals[names[i]].plot()
-                i += 1
-
-        f = fig.fig
+        f = self.myFig.fig
 
         canvas = FigureCanvasTkAgg(f, self)
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+
+        canvas.mpl_connect('pick_event', self.onpick)
+        canvas.mpl_connect('button_press_event', self.onpress)
+        canvas.mpl_connect('button_release_event', self.onrelease)
 
         toolbar = NavigationToolbar2Tk(canvas, self)
         toolbar.update()

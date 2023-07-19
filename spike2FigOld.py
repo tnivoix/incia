@@ -1,10 +1,10 @@
 from neo.io import Spike2IO
+import numpy as np
 import pandas as pd
-from matplotlib.figure import Figure
+import matplotlib.pyplot as plt
 import seaborn as sns
+from pprint import pprint
 from static import Side, Root
-import matplotlib
-matplotlib.use('TkAgg', force=True)
 
 class Spike2Fig():
     
@@ -75,7 +75,6 @@ class Spike2Fig():
 
 
     def onpress(self, event):
-        print("Press")
         if event.inaxes and event.button == 2:
             axLabel = event.inaxes.yaxis.get_label().get_text()
             if event.ydata >= 0:
@@ -90,7 +89,6 @@ class Spike2Fig():
 
 
     def onpick(self, event):
-        print("Pick")
         if event.mouseevent.inaxes:
             axLabel = event.mouseevent.inaxes.yaxis.get_label().get_text()
             if event.mouseevent.button == 1:
@@ -111,7 +109,6 @@ class Spike2Fig():
                 event.canvas.draw()
 
     def onrelease(self, event):
-        print("Release")
         if event.inaxes:
             if self.axe == event.inaxes.yaxis.get_label().get_text():
                 if self.startOrEnd == "Starts":
@@ -137,24 +134,20 @@ class Spike2Fig():
 
     def setupFig(self):
         sns.set_style('darkgrid')
-        #self.fig, (self.ax1, self.ax2) = plt.subplots(2, sharex=True)
-        self.fig = Figure(figsize=(5,5), dpi=100)
-        self.ax1 = self.fig.add_subplot(211)
-        self.ax2 = self.fig.add_subplot(212, sharex = self.ax1)
+        self.fig, (self.ax1, self.ax2) = plt.subplots(2, sharex=True)
 
         self.plotSignal(self.ax1, "GVS")
         self.plotSignal(self.ax2, "L-Rost")
 
         self.ax1.set(xlim=(0, max(self.gvsDf['Times'].iloc[-1], self.signalsDf['Times'].iloc[-1])))
+        self.fig.canvas.mpl_connect('pick_event', self.onpick)
+        self.fig.canvas.mpl_connect('button_press_event', self.onpress)
+        self.fig.canvas.mpl_connect('button_release_event', self.onrelease)
+        plt.subplots_adjust(hspace=0.1)
+        plt.legend(handles=[self.startPlots["GVS"], self.endPlots["GVS"]], bbox_to_anchor=(0.5, -0.3), loc='lower center', ncol=2)
+        self.fig.tight_layout() 
+        plt.show()
 
-        self.fig.subplots_adjust(hspace=0.1)
-        self.fig.legend(handles=[self.startPlots["GVS"], self.endPlots["GVS"]], bbox_to_anchor=(0.5, -0.3), loc='lower center', ncol=2)
-        self.fig.tight_layout()
-
-    def connectCanvas(self, canvas):
-        canvas.mpl_connect('pick_event', self.onpick)
-        canvas.mpl_connect('button_press_event', self.onpress)
-        canvas.mpl_connect('button_release_event', self.onrelease)
 
 if __name__ == "__main__":
     myFig = Spike2Fig()
