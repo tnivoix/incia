@@ -9,6 +9,7 @@ from interfaceModels import Spike2Figure
 matplotlib.use('TkAgg', force=True)
 import tkinter as tk
 from tkinter import ttk
+from tkinter import filedialog
 from spike2Fig import Spike2Fig
 from static import Side, Root
 
@@ -108,9 +109,15 @@ class Spike2Page(tk.Frame):
         self.myFig.onrelease(event)
 
     def openSpike2File(self):
+        filetypes = (('Data Files', '*.smr'),('All Files', '*.*'))
+
+        filename = filedialog.askopenfilename(
+            title='Open file',
+            initialdir='.',
+            filetypes=filetypes)
+
         self.myFig = Spike2Fig()
-        filePath = "Data_thomas/230407-galv-s54-analyse/230407-galv-s54_000.smr"
-        self.myFig.getCleanData(filePath)
+        self.myFig.getCleanData(filename)
         self.myFig.getGVSStartsEnds()
         self.myFig.setupFig()
         
