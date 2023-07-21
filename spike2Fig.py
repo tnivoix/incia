@@ -75,7 +75,6 @@ class Spike2Fig():
 
 
     def onpress(self, event):
-        print("Press")
         if event.inaxes and event.button == 2:
             axLabel = event.inaxes.yaxis.get_label().get_text()
             if event.ydata >= 0:
@@ -90,7 +89,6 @@ class Spike2Fig():
 
 
     def onpick(self, event):
-        print("Pick")
         if event.mouseevent.inaxes:
             axLabel = event.mouseevent.inaxes.yaxis.get_label().get_text()
             if event.mouseevent.button == 1:
@@ -111,7 +109,6 @@ class Spike2Fig():
                 event.canvas.draw()
 
     def onrelease(self, event):
-        print("Release")
         if event.inaxes:
             if self.axe == event.inaxes.yaxis.get_label().get_text():
                 if self.startOrEnd == "Starts":
@@ -130,6 +127,7 @@ class Spike2Fig():
 
 
     def plotSignal(self, ax, name):
+        ax.clear()
         df = self.gvsDf if name == "GVS" else self.signalsDf
         sns.lineplot(x=df['Times'], y=df[name], ax=ax)
         self.startPlots[name], = ax.eventplot(self.startData[name], orientation='horizontal', colors='g', lineoffsets=0.25, linelengths=0.5, picker=True, pickradius=5, label="Starts")
@@ -150,11 +148,6 @@ class Spike2Fig():
         self.fig.subplots_adjust(hspace=0.1)
         self.fig.legend(handles=[self.startPlots["GVS"], self.endPlots["GVS"]], bbox_to_anchor=(0.5, -0.3), loc='lower center', ncol=2)
         self.fig.tight_layout()
-
-    def connectCanvas(self, canvas):
-        canvas.mpl_connect('pick_event', self.onpick)
-        canvas.mpl_connect('button_press_event', self.onpress)
-        canvas.mpl_connect('button_release_event', self.onrelease)
 
 if __name__ == "__main__":
     myFig = Spike2Fig()

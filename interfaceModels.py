@@ -79,7 +79,6 @@ class Button():
         self.label = label
         self.buttonNames = buttonNames
         self.p = CheckButtons(ax, buttonNames, label)
-        self.p.on_clicked(self.onClicked)
     
     def onClicked(self, label):
         self.fig.inverseVisible(label)
