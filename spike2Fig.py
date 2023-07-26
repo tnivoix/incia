@@ -36,7 +36,6 @@ class Spike2Fig():
             for j in range(len(signals.array_annotations["channel_ids"])):
                 name = signals.array_annotations["channel_names"][j]
                 values = signals[:,j].magnitude
-
                 if name == "GVS":
                     self.gvsDf['Times'] = signals.times.magnitude
                     self.gvsDf[name] = values

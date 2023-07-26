@@ -1,21 +1,15 @@
-class A():
-    def __init__(self):
-        self.text = "AA"
+import numpy as np
+import matplotlib.pyplot as plt
 
-    def printA(self):
-        print(self.text)
-
-    def doSomething(self, func):
-        func()
-
-class B():
-    def __init__(self):
-        self.a = A()
-
-    def printA(self):
-        self.a.doSomething(self.a.printA)
-
-
-if __name__ == "__main__":
-    b = B()
-    b.printA()
+x = np.linspace(0, 10, num=101)
+y = np.cos(-x**2 / 9.0)
+xnew = np.linspace(0, 10, num=11)
+ynew = np.interp(xnew, x, y)
+print(len(x))
+print(len(xnew))
+print(len(y))
+print(len(ynew))
+plt.plot(xnew, ynew, '-', label='linear interp')
+plt.plot(x, y, 'o', label='data')
+plt.legend(loc='best')
+plt.show()

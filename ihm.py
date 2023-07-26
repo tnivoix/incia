@@ -86,6 +86,9 @@ class Spike2Page(tk.Frame):
                             command=lambda: self.openSpike2File(), name="spike2Page_button_openFile")
         button2.pack(side=tk.LEFT)
 
+        button3 = ttk.Button(f1, text="Save file",
+                            command=lambda: self.saveFile(), name="spike2Page_button_saveFile")
+        
         for s in [e.name for e in Side]:
             for r in [e.name for e in Root]:
                 name = "{}-{}".format(s,r)
@@ -93,6 +96,9 @@ class Spike2Page(tk.Frame):
                                 command=lambda name=name: self.changeAxe(name), name="spike2Page_button_{}".format(name))
                 button.pack(side=tk.LEFT)
         f1.pack()
+
+    def saveFile(self):
+        print("TODO: Save")
 
 
     def changeAxe(self, name):
@@ -121,6 +127,7 @@ class Spike2Page(tk.Frame):
         self.myFig.getGVSStartsEnds()
         self.myFig.setupFig()
         
+        self.children["spike2Page_frame1"].children["spike2Page_button_saveFile"].pack(side=tk.LEFT)
         self.children["spike2Page_frame2"].pack()
 
         f = self.myFig.fig
