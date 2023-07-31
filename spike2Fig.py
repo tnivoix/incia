@@ -53,6 +53,7 @@ class Spike2Fig():
         data = self.getDataFromSpike2(filename)
         oldGVS = []
         oldGVSTimes = []
+        gvsReady = False
         for signals in data.analogsignals:
             for j in range(len(signals.array_annotations["channel_ids"])):
                 name = signals.array_annotations["channel_names"][j]
@@ -60,25 +61,39 @@ class Spike2Fig():
                 if name == "GVS":
                     oldGVS = values[:,0]
                     oldGVSTimes = signals.times.magnitude
+                    gvsReady = True
                 else:
                     if self.signalsDf.empty:
                         self.signalsDf['Times'] = signals.times.magnitude
                     self.signalsDf[name.replace("vr","")] = values
-                if len(oldGVS) > 0 and not self.signalsDf.empty:
-                    execTime = self.getGVSStartsEnds(oldGVS, oldGVSTimes)
-                    newGVS = np.interp(self.signalsDf['Times'].tolist(), oldGVSTimes, oldGVS)
-                    oldGVS = []
-                    oldGVSTimes = []
-                    self.signalsDf["GVS"] = newGVS
+                if gvsReady and not self.signalsDf.empty:
+                    #execTime = self.getGVSStartsEnds(oldGVS, oldGVSTimes)
+                    if len(oldGVSTimes) == len(self.signalsDf['Times']):
+                        self.signalsDf["GVS"] = oldGVS
+                    else:
+                        newGVS = np.interp(self.signalsDf['Times'].tolist(), oldGVSTimes, oldGVS)
+                        self.signalsDf["GVS"] = newGVS
+                    gvsReady = False
 
         for event in data.events:
-            name = event.name.replace("MS-","")
-            if name[0] in [s.name for s in Side] and name[2:] in [r.name for r in Root]:
-                values = event.magnitude
+            values = event.magnitude
+            if "MS-" in event.name:
+                name = event.name.replace("MS-","")                
                 self.startData[name] = values.tolist()
                 self.endData[name] = []
+            if "S_" in event.name:
+                name = event.name.replace("S_","")                
+                self.startData[name] = values.tolist()
+            if "E_" in event.name:
+                name = event.name.replace("E_","")                
+                self.endData[name] = values.tolist()
+
+        print("Data collected in {} seconds".format(round(time.time()-tmp,2)))
+
+        if "GVS" not in list(self.startData.keys()):
+            self.getGVSStartsEnds(oldGVS, oldGVSTimes)
         
-        print("Data collected in {} seconds".format(round(time.time()-tmp-execTime,2)))
+        
 
     def getGVSStartsEnds(self, gvs, times):
         tmp = time.time()
@@ -101,9 +116,7 @@ class Spike2Fig():
                 lookEnd = True
         self.startData["GVS"] = s
         self.endData["GVS"] = e
-        execTime = time.time()-tmp
-        print("GVS bursts calculated in {} seconds".format(round(execTime,2)))
-        return execTime
+        print("GVS bursts calculated in {} seconds".format(round(time.time()-tmp,2)))
 
 
     def onpress(self, event):
