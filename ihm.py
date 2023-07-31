@@ -131,7 +131,9 @@ class Spike2Page(tk.Frame):
         self.children["spike2Page_frame2"].pack()
 
         f = self.myFig.fig
-
+        if "spike2Page_canvas" in list(self.children.keys()):
+            self.nametowidget("spike2Page_canvas").destroy()
+            self.nametowidget("spike2Page_toolbar").destroy()
         canvas = FigureCanvasTkAgg(f, self)
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
@@ -143,6 +145,12 @@ class Spike2Page(tk.Frame):
         toolbar = NavigationToolbar2Tk(canvas, self)
         toolbar.update()
         canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+
+        canvasName = canvas.get_tk_widget().winfo_name()
+        toolbarName = toolbar.winfo_name()
+        self.children["spike2Page_canvas"] = self.children.pop(canvasName)
+        self.children["spike2Page_toolbar"] = self.children.pop(toolbarName)
+        print(self.children.keys())
 
 
 class AnalysisPage(tk.Frame):
