@@ -1,6 +1,3 @@
-# The code for changing pages was derived from: http://stackoverflow.com/questions/7546050/switch-between-two-frames-in-tkinter
-# License: http://creativecommons.org/licenses/by-sa/3.0/	
-
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import matplotlib
@@ -18,12 +15,15 @@ LARGE_FONT= ("Verdana", 12)
 
 
 class XenopeAnalyser(tk.Tk):
+    """
+    Main class of the application. It will create the interface with all pages.
+    """
 
     def __init__(self, *args, **kwargs):
         
         tk.Tk.__init__(self, *args, **kwargs)
 
-        tk.Tk.iconbitmap(self, default="pictures/xenope.ico")
+        tk.Tk.iconbitmap(self, default="./pictures/xenope.ico")
         tk.Tk.wm_title(self, "Xenope analyser")
         
         
@@ -45,12 +45,17 @@ class XenopeAnalyser(tk.Tk):
         self.show_frame(StartPage)
 
     def show_frame(self, cont):
-
+        """
+        Show the selected page.
+        """
         frame = self.frames[cont]
         frame.tkraise()
 
         
 class StartPage(tk.Frame):
+    """
+    Start page of the application the redirect to all other pages.
+    """
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self,parent, name="startPage")
@@ -70,6 +75,9 @@ class StartPage(tk.Frame):
         button3.pack()
 
 class Spike2Page(tk.Frame):
+    """
+    Page used to open, modify and save a spike2 file .smr.
+    """
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, name="spike2Page")
@@ -98,24 +106,42 @@ class Spike2Page(tk.Frame):
         f1.pack()
 
     def saveFile(self):
+        """
+        Ask where to save the file and redirect to the Spike2Fig function.
+        """
         files = [('Text Document', '*.txt')]
         filename = filedialog.asksaveasfilename(filetypes = files, defaultextension = files)
         self.myFig.saveDataInTxt(filename)
 
     def changeAxe(self, name):
+        """
+        Change the signal ploted on the second axe.
+        """
         self.myFig.plotSignal(self.myFig.ax2, name)
         self.myFig.fig.canvas.draw()
 
     def onpick(self, event):
+        """
+        Redirect to the Spike2Fig function
+        """
         self.myFig.onpick(event)
 
     def onpress(self, event):
+        """
+        Redirect to the Spike2Fig function
+        """
         self.myFig.onpress(event)
 
     def onrelease(self, event):
+        """
+        Redirect to the Spike2Fig function
+        """
         self.myFig.onrelease(event)
 
     def openSpike2File(self):
+        """
+        Ask the file .smr to open and create the Spike2Fig object.
+        """
         filetypes = (('Data Files', '*.smr'),('All Files', '*.*'))
 
         filename = filedialog.askopenfilename(
@@ -127,13 +153,21 @@ class Spike2Page(tk.Frame):
         self.myFig.getCleanData(filename)
         self.myFig.setupFig()
         
-        self.children["spike2Page_frame1"].children["spike2Page_button_saveFile"].pack(side=tk.LEFT)
-        self.children["spike2Page_frame2"].pack()
-
         f = self.myFig.fig
+        self.createCanvas(f)
+        
+
+    def createCanvas(self, f):
+        """
+        Create the canvas to display on the page.
+        """
         if "spike2Page_canvas" in list(self.children.keys()):
             self.nametowidget("spike2Page_canvas").destroy()
             self.nametowidget("spike2Page_toolbar").destroy()
+        else:
+            self.children["spike2Page_frame1"].children["spike2Page_button_saveFile"].pack(side=tk.LEFT)
+            self.children["spike2Page_frame2"].pack()
+        
         canvas = FigureCanvasTkAgg(f, self)
         canvas.draw()
         canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
@@ -150,10 +184,11 @@ class Spike2Page(tk.Frame):
         toolbarName = toolbar.winfo_name()
         self.children["spike2Page_canvas"] = self.children.pop(canvasName)
         self.children["spike2Page_toolbar"] = self.children.pop(toolbarName)
-        print(self.children.keys())
-
 
 class AnalysisPage(tk.Frame):
+    """
+    Page to do analysis.
+    """
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, name="analysisPage")
@@ -169,9 +204,15 @@ class AnalysisPage(tk.Frame):
         button2.pack()
 
     def doAnalysis(self):
+        """
+        TODO: Do analysis.
+        """
         print("TODO: Do analysis")
 
 class PageThree(tk.Frame):
+    """
+    TMP page to display hideable axes.
+    """
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
@@ -211,7 +252,11 @@ class PageThree(tk.Frame):
         canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
     def on_clicked(self, label):
+        """
+        Redirect to the Spike2Figure function
+        """
         self.fig.showButton.onClicked(label)
 
-app = XenopeAnalyser()
-app.mainloop()
+if __name__ == "__main__":
+    app = XenopeAnalyser()
+    app.mainloop()

@@ -1,5 +1,6 @@
 neo
 matplotlib
+seaborn
 numpy
 neurodsp
 scipy
@@ -7,3 +8,4 @@ tk
 pandas
 astropy
 openpyxl
+pdoc3

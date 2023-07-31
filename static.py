@@ -1,6 +1,6 @@
 from enum import Enum
 
-DATA_FOLDER = "c:/Users/tnivoix/Documents/code/Data_thomas/"
+DATA_FOLDER = "c:/Users/tnivoix/Documents/project/Data_thomas/"
 
 
 class Root(Enum):
