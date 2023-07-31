@@ -98,8 +98,9 @@ class Spike2Page(tk.Frame):
         f1.pack()
 
     def saveFile(self):
-        print("TODO: Save")
-
+        files = [('Text Document', '*.txt')]
+        filename = filedialog.asksaveasfilename(filetypes = files, defaultextension = files)
+        self.myFig.saveDataInTxt(filename)
 
     def changeAxe(self, name):
         self.myFig.plotSignal(self.myFig.ax2, name)
@@ -124,7 +125,6 @@ class Spike2Page(tk.Frame):
 
         self.myFig = Spike2Fig()
         self.myFig.getCleanData(filename)
-        self.myFig.getGVSStartsEnds()
         self.myFig.setupFig()
         
         self.children["spike2Page_frame1"].children["spike2Page_button_saveFile"].pack(side=tk.LEFT)

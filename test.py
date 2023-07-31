@@ -1,15 +1,7 @@
 import numpy as np
-import matplotlib.pyplot as plt
+import pandas as pd
 
-x = np.linspace(0, 10, num=101)
-y = np.cos(-x**2 / 9.0)
-xnew = np.linspace(0, 10, num=11)
-ynew = np.interp(xnew, x, y)
-print(len(x))
-print(len(xnew))
-print(len(y))
-print(len(ynew))
-plt.plot(xnew, ynew, '-', label='linear interp')
-plt.plot(x, y, 'o', label='data')
-plt.legend(loc='best')
-plt.show()
+df1 = pd.DataFrame({"Times" : [1,2,3], "GVS" : [0.5,-1,0.6]})
+df2 = pd.DataFrame({"L" : [6, 0], "R" : [56,75]})
+df3 = pd.concat([df1,df2], axis=1)
+print(df3)

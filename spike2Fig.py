@@ -1,4 +1,7 @@
+from pprint import pprint
+import time
 from neo.io import Spike2IO
+import numpy as np
 import pandas as pd
 from matplotlib.figure import Figure
 import seaborn as sns
@@ -9,7 +12,6 @@ matplotlib.use('TkAgg', force=True)
 class Spike2Fig():
     
     def __init__(self):
-        self.gvsDf = pd.DataFrame()
         self.signalsDf = pd.DataFrame()
         self.startData = {}
         self.endData = {}
@@ -23,26 +25,51 @@ class Spike2Fig():
         self.axe = None
 
     def getDataFromSpike2(self, filePath):
+            tmp = time.time()
             reader = Spike2IO(filename=filePath)
             data = reader.read()
-            print("File {} read".format(filePath))
+            print("File {} read in {} seconds".format(filePath, round(time.time()-tmp,2)))
             return data[0].segments[0]
 
+    def saveDataInTxt(self, filename):
+        tmp = time.time()
+        s = pd.DataFrame()
+        for k, v in self.startData.items():
+            sTmp = pd.DataFrame({k:v})
+            s = pd.concat([s,sTmp], axis = 1)
+        s = s.add_prefix('S_')
+        e = pd.DataFrame()
+        for k, v in self.endData.items():
+            eTmp = pd.DataFrame({k:v})
+            e = pd.concat([e,eTmp], axis = 1)
+        e = e.add_prefix('E_')
+        df = pd.concat([self.signalsDf, s, e], axis=1)
+        df = df.fillna(0)
+        df.to_csv(filename, index=None, sep=',', mode='a')
+        print("File {} saved in {} seconds".format(filename, round(time.time()-tmp,2)))
 
     def getCleanData(self, filename):
+        tmp = time.time()
         data = self.getDataFromSpike2(filename)
-
+        oldGVS = []
+        oldGVSTimes = []
         for signals in data.analogsignals:
             for j in range(len(signals.array_annotations["channel_ids"])):
                 name = signals.array_annotations["channel_names"][j]
                 values = signals[:,j].magnitude
                 if name == "GVS":
-                    self.gvsDf['Times'] = signals.times.magnitude
-                    self.gvsDf[name] = values
+                    oldGVS = values[:,0]
+                    oldGVSTimes = signals.times.magnitude
                 else:
                     if self.signalsDf.empty:
                         self.signalsDf['Times'] = signals.times.magnitude
                     self.signalsDf[name.replace("vr","")] = values
+                if len(oldGVS) > 0 and not self.signalsDf.empty:
+                    execTime = self.getGVSStartsEnds(oldGVS, oldGVSTimes)
+                    newGVS = np.interp(self.signalsDf['Times'].tolist(), oldGVSTimes, oldGVS)
+                    oldGVS = []
+                    oldGVSTimes = []
+                    self.signalsDf["GVS"] = newGVS
 
         for event in data.events:
             name = event.name.replace("MS-","")
@@ -50,27 +77,33 @@ class Spike2Fig():
                 values = event.magnitude
                 self.startData[name] = values.tolist()
                 self.endData[name] = []
+        
+        print("Data collected in {} seconds".format(round(time.time()-tmp-execTime,2)))
 
-    def getGVSStartsEnds(self):
+    def getGVSStartsEnds(self, gvs, times):
+        tmp = time.time()
         threshold = -0.001
         s = []
         e = []
         lookStart = True
         lookEnd = False 
-        for i in range(len(self.gvsDf['GVS'])):
-            if lookStart and self.gvsDf['GVS'][i]<=threshold:
-                s.append(self.gvsDf['Times'][i])
+        for i in range(len(gvs)):
+            if lookStart and gvs[i]<=threshold:
+                s.append(times[i])
                 lookStart = False
-            if not lookStart and self.gvsDf['GVS'][i]>threshold:
+            if not lookStart and gvs[i]>threshold:
                 lookStart = True
 
-            if lookEnd and self.gvsDf['GVS'][i]<= -threshold:
-                e.append(self.gvsDf['Times'][i])
+            if lookEnd and gvs[i]<= -threshold:
+                e.append(times[i])
                 lookEnd = False
-            if not lookEnd and self.gvsDf['GVS'][i]> -threshold:
+            if not lookEnd and gvs[i]> -threshold:
                 lookEnd = True
         self.startData["GVS"] = s
         self.endData["GVS"] = e
+        execTime = time.time()-tmp
+        print("GVS bursts calculated in {} seconds".format(round(execTime,2)))
+        return execTime
 
 
     def onpress(self, event):
@@ -126,15 +159,18 @@ class Spike2Fig():
 
 
     def plotSignal(self, ax, name):
+        tmp = time.time()
         ax.clear()
-        df = self.gvsDf if name == "GVS" else self.signalsDf
+        times = np.linspace(0, self.signalsDf['Times'].iloc[-1], num=100001)
+        values = np.interp(times, self.signalsDf['Times'], self.signalsDf[name])
+        df = pd.DataFrame({"Times" : times, name : values})
         sns.lineplot(x=df['Times'], y=df[name], ax=ax)
         self.startPlots[name], = ax.eventplot(self.startData[name], orientation='horizontal', colors='g', lineoffsets=0.25, linelengths=0.5, picker=True, pickradius=5, label="Starts")
         self.endPlots[name], = ax.eventplot(self.endData[name], orientation='horizontal', colors='r', lineoffsets=-0.25, linelengths=0.5, picker=True, pickradius=5, label="Ends")
+        print("Axe {} ploted in {} seconds".format(name, round(time.time()-tmp,2)))
 
     def setupFig(self):
         sns.set_style('darkgrid')
-        #self.fig, (self.ax1, self.ax2) = plt.subplots(2, sharex=True)
         self.fig = Figure(figsize=(5,5), dpi=100)
         self.ax1 = self.fig.add_subplot(211)
         self.ax2 = self.fig.add_subplot(212, sharex = self.ax1)
@@ -142,7 +178,7 @@ class Spike2Fig():
         self.plotSignal(self.ax1, "GVS")
         self.plotSignal(self.ax2, "L-Rost")
 
-        self.ax1.set(xlim=(0, max(self.gvsDf['Times'].iloc[-1], self.signalsDf['Times'].iloc[-1])))
+        self.ax1.set(xlim=(0, self.signalsDf['Times'].iloc[-1]))
 
         self.fig.subplots_adjust(hspace=0.1)
         self.fig.legend(handles=[self.startPlots["GVS"], self.endPlots["GVS"]], bbox_to_anchor=(0.5, -0.3), loc='lower center', ncol=2)
@@ -152,5 +188,4 @@ if __name__ == "__main__":
     myFig = Spike2Fig()
     filePath = "Data_thomas/230407-galv-s54-analyse/230407-galv-s54_000.smr"
     myFig.getCleanData(filePath)
-    myFig.getGVSStartsEnds()
     myFig.setupFig()
