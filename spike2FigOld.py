@@ -234,34 +234,15 @@ class Spike2Fig:
         """
         Create the Figure with 2 axes, the GVS and the L-Rost.
         """
-        nbSignals = len(self.signalsDf.keys())-1
-
         sns.set_style("darkgrid")
         self.fig = Figure(figsize=(5, 5), dpi=100)
-        self.fig.subplots_adjust(right=0.9, bottom=0.25)
-        self.gs = self.fig.add_gridspec(nbSignals, 2, width_ratios=[5,1])
+        self.ax1 = self.fig.add_subplot(211)
+        self.ax2 = self.fig.add_subplot(212, sharex=self.ax1)
 
-        
-        i=0
-        first = None
-        for k in self.signalsDf.keys():
-            if k != "Times":
-                ax = self.fig.add_subplot(self.gs[i, 0], sharex = first)
-                self.plotSignal(ax, k)
-                if i < nbSignals -1:
-                    ax.get_xaxis().set_visible(False)
-                if i == 0:
-                    first = ax
-                    ax.set(xlim=(0, self.signalsDf["Times"].iloc[-1]))
-                i += 1
+        self.plotSignal(self.ax1, "GVS")
+        self.plotSignal(self.ax2, "L-Rost")
 
-        # self.fig.axes
-
-        # self.ax1 = self.fig.add_subplot(211)
-        # self.ax2 = self.fig.add_subplot(212, sharex=self.ax1)
-
-        # self.plotSignal(self.ax1, "GVS")
-        # self.plotSignal(self.ax2, "L-Rost")
+        self.ax1.set(xlim=(0, self.signalsDf["Times"].iloc[-1]))
 
         self.fig.subplots_adjust(hspace=0.1)
         self.fig.legend(

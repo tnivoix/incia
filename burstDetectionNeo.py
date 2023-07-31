@@ -78,7 +78,10 @@ def plotData(data, plotEvents, plotSignals, withBurst=False):
                     burst = getBurst(np.concatenate(signals[:,j].magnitude), signals._sampling_rate.magnitude, amp_dual_thresh, f_range)
                     plot_bursts(signals.times.magnitude, signals[:,j].magnitude, burst, axs[i])
                 else:
-                    axs[i].plot(signals.times.magnitude, signals[:,j].magnitude)
+                    times = np.linspace(0, signals.times.magnitude[-1], num=100001)
+                    values = np.interp(times, signals.times.magnitude, signals[:,j].magnitude[:,0])
+                    
+                    axs[i].plot(times, values)
                 axs[i].set(ylabel=signals.array_annotations['channel_names'][j], xlabel=None)
                 i += 1
                 print("Analog Signal {} done".format(signals.array_annotations['channel_names'][j]))
@@ -145,7 +148,7 @@ def nearestX(starts, x):
 if __name__ == "__main__":
     filePath = "Data_thomas/230407-galv-s54-analyse/230407-galv-s54_000.smr"
     data = getDataFromSpike2(filePath)
-    plotData(data, plotEvents=False, plotSignals=True, withBurst=True)
+    plotData(data, plotEvents=False, plotSignals=True, withBurst=False)
 
 
     # gvs, times = getGVS(data)

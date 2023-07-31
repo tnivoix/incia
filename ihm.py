@@ -7,7 +7,7 @@ matplotlib.use('TkAgg', force=True)
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
-from spike2Fig import Spike2Fig
+from spike2FigOld import Spike2Fig
 from static import Side, Root
 
 
