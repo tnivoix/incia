@@ -94,8 +94,11 @@ class Spike2Page(tk.Frame):
                             command=lambda: self.openSpike2File(), name="spike2Page_button_openFile")
         button2.pack(side=tk.LEFT)
 
-        button3 = ttk.Button(f1, text="Save file",
-                            command=lambda: self.saveFile(), name="spike2Page_button_saveFile")
+        button3 = ttk.Button(f1, text="Export file",
+                            command=lambda: self.exportFile(), name="spike2Page_button_exportFile")
+        
+        button4 = ttk.Button(f1, text="Save events",
+                            command=lambda: self.saveEvents(), name="spike2Page_button_saveEvents")
         
         for s in [e.name for e in Side]:
             for r in [e.name for e in Root]:
@@ -105,13 +108,18 @@ class Spike2Page(tk.Frame):
                 button.pack(side=tk.LEFT)
         f1.pack()
 
-    def saveFile(self):
+    def exportFile(self):
         """
         Ask where to save the file and redirect to the Spike2Fig function.
         """
         files = [('Text Document', '*.txt')]
         filename = filedialog.asksaveasfilename(filetypes = files, defaultextension = files)
-        self.myFig.saveDataInTxt(filename)
+        self.myFig.exportDataInTxt(filename)
+
+    def saveEvents(self):
+        savefile = self.filename[:-4] + ".csv"
+        self.myFig.saveEventsInCsv(savefile)
+
 
     def changeAxe(self, name):
         """
@@ -144,13 +152,13 @@ class Spike2Page(tk.Frame):
         """
         filetypes = (('Data Files', '*.smr'),('All Files', '*.*'))
 
-        filename = filedialog.askopenfilename(
+        self.filename = filedialog.askopenfilename(
             title='Open file',
             initialdir='.',
             filetypes=filetypes)
 
         self.myFig = Spike2Fig()
-        self.myFig.getCleanData(filename)
+        self.myFig.getCleanData(self.filename)
         self.myFig.setupFig()
         
         f = self.myFig.fig
@@ -165,7 +173,8 @@ class Spike2Page(tk.Frame):
             self.nametowidget("spike2Page_canvas").destroy()
             self.nametowidget("spike2Page_toolbar").destroy()
         else:
-            self.children["spike2Page_frame1"].children["spike2Page_button_saveFile"].pack(side=tk.LEFT)
+            self.children["spike2Page_frame1"].children["spike2Page_button_exportFile"].pack(side=tk.LEFT)
+            self.children["spike2Page_frame1"].children["spike2Page_button_saveEvents"].pack(side=tk.LEFT)
             self.children["spike2Page_frame2"].pack()
         
         canvas = FigureCanvasTkAgg(f, self)

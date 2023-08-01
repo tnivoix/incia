@@ -2,6 +2,7 @@
 **/*.S2R
 **/*.odk
 **/*.ori
+**/*.csv
 
 .env/
 .vscode/

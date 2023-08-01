@@ -6,6 +6,7 @@ import pandas as pd
 from matplotlib.figure import Figure
 import seaborn as sns
 import matplotlib
+import os
 
 matplotlib.use("TkAgg", force=True)
 
@@ -17,10 +18,8 @@ class Spike2Fig:
 
     def __init__(self):
         self.signalsDf = pd.DataFrame()
-        self.startData = {}
-        self.endData = {}
-        self.startPlots = {}
-        self.endPlots = {}
+        self.eventsData = {}
+        self.eventPlots = {}
         self.fig = None
         self.ax1 = None
         self.ax2 = None
@@ -40,12 +39,19 @@ class Spike2Fig:
         )
         return data[0].segments[0]
 
+    def clearDict(self, d):
+        for k in d.keys():
+            d[k] = [i for i in d[k] if i != 0]
+        return d
+
     def getCleanData(self, filename):
         """
         Convert data read from the .smr file to DataFrame for analog signals and to dict for events (starts ans ends).
         """
         tmp = time.time()
         data = self.getDataFromSpike2(filename)
+        eventsFile = filename[:-4] + ".csv"
+        
         oldGVS = []
         oldGVSTimes = []
         gvsReady = False
@@ -71,23 +77,22 @@ class Spike2Fig:
                         )
                         self.signalsDf["GVS"] = newGVS
                     gvsReady = False
-
-        for event in data.events:
-            values = event.magnitude
-            if "MS-" in event.name:
-                name = event.name.replace("MS-", "")
-                self.startData[name] = values.tolist()
-                self.endData[name] = []
-            if "S_" in event.name:
-                name = event.name.replace("S_", "")
-                self.startData[name] = values.tolist()
-            if "E_" in event.name:
-                name = event.name.replace("E_", "")
-                self.endData[name] = values.tolist()
-
+        if os.path.isfile(eventsFile):
+            print(eventsFile)
+            self.eventsData = self.clearDict(pd.read_csv(eventsFile).to_dict('list'))
+        else:
+            for event in data.events:
+                values = event.magnitude
+                if "MS-" in event.name:
+                    name = event.name.replace("MS-", "S_")
+                    self.eventsData[name] = values.tolist()
+                    self.eventsData[name.replace("S_", "E_")] = []
+                if "S_" in event.name or "E_" in event.name:
+                    self.eventsData[name] = values.tolist()
+        
         print("Data collected in {} seconds".format(round(time.time() - tmp, 2)))
 
-        if "GVS" not in list(self.startData.keys()):
+        if "S_GVS" not in list(self.eventsData.keys()):
             self.getGVSStartsEnds(oldGVS, oldGVSTimes)
 
     def getGVSStartsEnds(self, gvs, times):
@@ -112,30 +117,37 @@ class Spike2Fig:
                 lookEnd = False
             if not lookEnd and gvs[i] > -threshold:
                 lookEnd = True
-        self.startData["GVS"] = s
-        self.endData["GVS"] = e
+        self.eventsData["S_GVS"] = s
+        self.eventsData["E_GVS"] = e
         print("GVS bursts calculated in {} seconds".format(round(time.time() - tmp, 2)))
 
-    def saveDataInTxt(self, filename):
+    def exportDataInTxt(self, filename):
         """
         Save all data (analog signals and start and end events) in a .txt file readable by spike2.
         """
         tmp = time.time()
-        s = pd.DataFrame()
-        for k, v in self.startData.items():
-            sTmp = pd.DataFrame({k: v})
-            s = pd.concat([s, sTmp], axis=1)
-        s = s.add_prefix("S_")
-        e = pd.DataFrame()
-        for k, v in self.endData.items():
-            eTmp = pd.DataFrame({k: v})
-            e = pd.concat([e, eTmp], axis=1)
-        e = e.add_prefix("E_")
-        df = pd.concat([self.signalsDf, s, e], axis=1)
+        events = self.dictToDf(self.eventsData)
+        df = pd.concat([self.signalsDf, events], axis=1)
         df = df.fillna(0)
         df.to_csv(filename, index=None, sep=",", mode="a")
         print(
-            "File {} saved in {} seconds".format(filename, round(time.time() - tmp, 2))
+            "File {} exported in {} seconds".format(filename, round(time.time() - tmp, 2))
+        )
+
+    def dictToDf(self, d):
+        df = pd.DataFrame()
+        for k, v in d.items():
+            tmp = pd.DataFrame({k: v})
+            df = pd.concat([df, tmp], axis=1)
+        return df
+
+    def saveEventsInCsv(self, savefile):
+        tmp = time.time()
+        events = self.dictToDf(self.eventsData)
+        events = events.fillna(0)
+        events.to_csv(savefile, index=None, sep=",")
+        print(
+            "File {} saved in {} seconds".format(savefile, round(time.time() - tmp, 2))
         )
 
     def onpress(self, event):
@@ -145,13 +157,12 @@ class Spike2Fig:
         if event.inaxes and event.button == 2:
             axLabel = event.inaxes.yaxis.get_label().get_text()
             if event.ydata >= 0:
-                self.startData[axLabel].append(event.xdata)
-                self.startData[axLabel].sort()
-                self.startPlots[axLabel].set_positions(self.startData[axLabel])
+                axLabel = "S_" + axLabel
             else:
-                self.endData[axLabel].append(event.xdata)
-                self.endData[axLabel].sort()
-                self.endPlots[axLabel].set_positions(self.endData[axLabel])
+                axLabel = "E_" + axLabel
+            self.eventsData[axLabel].append(event.xdata)
+            self.eventsData[axLabel].sort()
+            self.eventPlots[axLabel].set_positions(self.eventsData[axLabel])
             event.canvas.draw()
 
     def onpick(self, event):
@@ -169,13 +180,12 @@ class Spike2Fig:
             if event.mouseevent.button == 3:
                 eventsArtist = event.artist
                 if eventsArtist.get_label() == "Starts":
-                    i = event.ind[0]
-                    del self.startData[axLabel][i]
-                    self.startPlots[axLabel].set_positions(self.startData[axLabel])
+                    axLabel = "S_" + axLabel
                 if eventsArtist.get_label() == "Ends":
-                    i = event.ind[0]
-                    del self.endData[axLabel][i]
-                    self.endPlots[axLabel].set_positions(self.endData[axLabel])
+                    axLabel = "E_" + axLabel
+                i = event.ind[0]
+                del self.eventsData[axLabel][i]
+                self.eventPlots[axLabel].set_positions(self.eventsData[axLabel])
                 event.canvas.draw()
 
     def onrelease(self, event):
@@ -185,14 +195,12 @@ class Spike2Fig:
         if event.inaxes:
             if self.axe == event.inaxes.yaxis.get_label().get_text():
                 if self.startOrEnd == "Starts":
-                    self.startData[self.axe][self.index] = event.xdata
-                    self.startData[self.axe].sort()
-                    self.startPlots[self.axe].set_positions(self.startData[self.axe])
+                    self.axe = "S_" + self.axe
                 if self.startOrEnd == "Ends":
-                    self.endData[self.axe][self.index] = event.xdata
-                    self.endData[self.axe].sort()
-                    self.endPlots[self.axe].set_positions(self.endData[self.axe])
-
+                    self.axe = "E_" + self.axe
+                self.eventsData[self.axe][self.index] = event.xdata
+                self.eventsData[self.axe].sort()
+                self.eventPlots[self.axe].set_positions(self.eventsData[self.axe])
                 self.index = None
                 self.startOrEnd = None
                 self.axe = None
@@ -208,8 +216,8 @@ class Spike2Fig:
         values = np.interp(times, self.signalsDf["Times"], self.signalsDf[name])
         df = pd.DataFrame({"Times": times, name: values})
         sns.lineplot(x=df["Times"], y=df[name], ax=ax)
-        (self.startPlots[name],) = ax.eventplot(
-            self.startData[name],
+        (self.eventPlots["S_"+name],) = ax.eventplot(
+            self.eventsData["S_"+name],
             orientation="horizontal",
             colors="g",
             lineoffsets=0.25,
@@ -218,8 +226,8 @@ class Spike2Fig:
             pickradius=5,
             label="Starts",
         )
-        (self.endPlots[name],) = ax.eventplot(
-            self.endData[name],
+        (self.eventPlots["E_"+name],) = ax.eventplot(
+            self.eventsData["E_"+name],
             orientation="horizontal",
             colors="r",
             lineoffsets=-0.25,
@@ -246,7 +254,7 @@ class Spike2Fig:
 
         self.fig.subplots_adjust(hspace=0.1)
         self.fig.legend(
-            handles=[self.startPlots["GVS"], self.endPlots["GVS"]],
+            handles=[self.eventPlots["S_GVS"], self.eventPlots["E_GVS"]],
             bbox_to_anchor=(0.5, -0.3),
             loc="lower center",
             ncol=2,
