@@ -1,6 +1,7 @@
 import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import matplotlib
+import pandas as pd
 
 from interfaceModels import Spike2Figure
 matplotlib.use('TkAgg', force=True)
@@ -9,6 +10,7 @@ from tkinter import ttk
 from tkinter import filedialog
 from spike2FigOld import Spike2Fig
 from static import Side, Root
+from graph import CircularGraph
 
 
 LARGE_FONT= ("Verdana", 12)
@@ -34,7 +36,7 @@ class XenopeAnalyser(tk.Tk):
 
         self.frames = {}
 
-        for F in (StartPage, Spike2Page, AnalysisPage, PageThree):
+        for F in (StartPage, Spike2Page, AnalysisPage, OneGraphPage):
 
             frame = F(container, self)
 
@@ -71,7 +73,7 @@ class StartPage(tk.Frame):
         button2.pack()
 
         button3 = ttk.Button(self, text="Graph Page",
-                            command=lambda: controller.show_frame(PageThree), name="startPage_button_graphPage")
+                            command=lambda: controller.show_frame(OneGraphPage), name="startPage_button_graphPage")
         button3.pack()
 
 class Spike2Page(tk.Frame):
@@ -218,53 +220,57 @@ class AnalysisPage(tk.Frame):
         """
         print("TODO: Do analysis")
 
-class PageThree(tk.Frame):
+class OneGraphPage(tk.Frame):
     """
     TMP page to display hideable axes.
     """
 
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
-        label = tk.Label(self, text="Graph Page!", font=LARGE_FONT)
+        label = tk.Label(self, text="One Graph Page!", font=LARGE_FONT, name = "oneGraphPage_label")
         label.pack(pady=10,padx=10)
 
         button1 = ttk.Button(self, text="Back to Home",
-                            command=lambda: controller.show_frame(StartPage))
+                            command=lambda: controller.show_frame(StartPage), name = "oneGraphPage_button_startPage")
         button1.pack()
+        button2 = ttk.Button(self, text="Open txt file",
+                            command=lambda: self.openTxtFile(), name = "oneGraphPage_button_openFile")
+        button2.pack()
 
-        self.fig = Spike2Figure(3, ["Ax1", "Ax2", "Ax3"])
-        x1 = np.array([0, 1, 2, 3])
-        y1 = np.array([5, 2, 8, 6])
-        self.fig.signals["Ax1"].setData(x1, y1)
-        self.fig.signals["Ax1"].plot()
+
+    def openTxtFile(self):
+        """
+        Ask the .txt file to open.
+        """
+        filetypes = [('Text Document', '*.txt')]
+
+        filepath = filedialog.askopenfilename(
+            title='Open file',
+            initialdir='.',
+            filetypes=filetypes)
         
-        x2 = np.array([0, 1, 2, 3])
-        y2 = np.array([10, 2, 0, 12])
-        self.fig.signals["Ax2"].setData(x2, y2)
-        self.fig.signals["Ax2"].plot()
-        
-        x3 = np.array([0, 1, 2, 3])
-        y3 = np.array([0, 3, 2, 19])
-        self.fig.signals["Ax3"].setData(x3, y3)
-        self.fig.signals["Ax3"].plot()
+        self.circularGraph = CircularGraph(filepath.split('/')[-1][:-4])
+        self.circularGraph.openTxtFile(filepath)
+        self.circularGraph.plotGraph()
 
-        self.fig.showButton.p.on_clicked(self.on_clicked)
+        if "oneGraphPage_canvas" in list(self.children.keys()):
+            self.nametowidget("oneGraphPage_canvas").destroy()
+            self.nametowidget("oneGraphPage_stats").destroy()
 
-        f = self.fig.fig
+        f = self.circularGraph.fig
 
         canvas = FigureCanvasTkAgg(f, self)
         canvas.draw()
-        canvas.get_tk_widget().pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        canvas.get_tk_widget().pack(side="left", fill=tk.BOTH, expand=True)
 
-        toolbar = NavigationToolbar2Tk(canvas, self)
-        toolbar.update()
-        canvas._tkcanvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
-
-    def on_clicked(self, label):
-        """
-        Redirect to the Spike2Figure function
-        """
-        self.fig.showButton.onClicked(label)
+        canvasName = canvas.get_tk_widget().winfo_name()
+        self.children["oneGraphPage_canvas"] = self.children.pop(canvasName)
+        stats = tk.Frame(self, name="oneGraphPage_stats")
+        for k,v in self.circularGraph.stats.items():
+            stat = tk.Label(stats, text="{} : {}".format(k,v))
+            stat.pack(side="top")
+        stats.pack(side="right", fill=tk.BOTH, expand=True)
+        
 
 if __name__ == "__main__":
     app = XenopeAnalyser()

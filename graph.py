@@ -1,13 +1,112 @@
 # Lib for graphs visualisation
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+import numpy as np
+import pandas as pd
 matplotlib.use("TkAgg")
 
 # Libs for stats
 from scipy.stats import circmean, circvar
+from astropy.stats import rayleightest
 
-from static import Root, Side
+from static import Root, Side, Color
 
+# date, subject, condition, side, root
+class CircularGraph:
+    def __init__(self, name):
+        self.data = {}
+        self.name = name
+        self.stats = {}
+        self.setupFigure()
+
+    def setupFigure(self):
+        self.fig = Figure(figsize=(5, 5), dpi=100)
+        self.fig.suptitle(self.name)
+        ax = self.fig.add_subplot(111, projection="polar")
+        ax.set_theta_zero_location("N")  # theta=0 at the top
+        ax.set_theta_direction(-1)  # theta increasing clockwise
+        ax.set_yticklabels([])
+        ax.set_rgrids([])
+        ax.set_thetagrids([0, 90, 180, 270], ["0°", "90°", "180°", "270°"])
+        ax.set_ylim(0, 1)
+
+    def plotGraph(self):
+        ax = self.fig.axes[0]
+        i = 0
+        for k in self.data.keys():
+            mean = circmean(self.data[k])
+
+            r = 1 - circvar(self.data[k])
+            ax.plot(self.data[k], [1] * len(self.data[k]), "o", label=k, color=Color(i).name)
+            ax.quiver(mean, 0, 0, r, label=k, color=Color(i).name, angles="xy", scale=2)
+            i += 1
+
+    def openTxtFile(self, filepath):
+        df = pd.read_csv(filepath, sep=" ")
+        self.data["Data"] = self.formatPhaseData(df)
+        self.calcStats("Data")
+
+    def formatPhaseData(self, data):
+        phase_numbers = []
+        phase_tmp = 1
+        row_to_delete = []
+
+        # Look at all phases
+        for i in range(data.shape[0]):
+            # Check if it's not the first value
+            if i != 0:
+                # Test if the actual phase time is far away for the previous one
+                if data.iloc[i, 0] - data.iloc[i - 1, 0] > 10:
+                    # Select the phase to deletion
+                    row_to_delete.append(i-1)
+                    # Change cycle
+                    phase_tmp += 1
+            # Write the cycle number in a tmp array
+            phase_numbers.append(phase_tmp)
+
+        # Add cycle number to all phases
+        data["Phase_Number"] = phase_numbers
+
+        # Remove useless data between phases
+        data = data.drop(row_to_delete)
+
+        # Change angles to degree
+        data["'S-S'_Phase"] = data["'S-S'_Phase"] * 360
+
+        # Keep only angles
+        angles = np.deg2rad(data["'S-S'_Phase"]).sort_values().array
+
+        return angles
+    
+    def calcStats(self, label):
+        if len(self.data[label]) > 0:
+            # Nb phases
+            n = len(self.data[label])
+            self.stats["Number of observations"] = n
+            # Mean vector
+            mean = circmean(self.data[label])
+            self.stats["Mean vector"] = np.rad2deg(mean)
+            # Mean vector length
+            r = 1 - circvar(self.data[label])
+            self.stats["Length of mean vector"] = r
+            # Rayleigh test Z
+            Z = n * r * r
+            self.stats["Rayleigh test (Z)"] = Z
+            # Rayleigh test p
+            p = rayleightest(self.data[label])
+            self.stats["Rayleigh test (p)"] = p
+            # Rao's spacing test U
+            u = 0
+            for i in range(n):
+                t = 0
+                if i == n - 1:
+                    t = 2 * np.pi - self.data[label][i] + self.data[label][0]
+                else:
+                    t = self.data[label][i + 1] - self.data[label][i]
+                u += abs(t - 2 * np.pi / n)
+            u = 0.5 * u
+            self.stats["Rao's spacing test (U)"] = u
 
 # Create the figure to display all graphs
 def setupFigure(name):
