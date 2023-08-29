@@ -7,7 +7,6 @@
 - [x] Save events
 - [x] Save file in .txt to import in Spike2
 - [ ] Export phase analysis in .txt
-- [ ] Make other spike2 scripts
 
 ## Unique graph page
 
@@ -17,13 +16,10 @@
 
 ## Mean graph page
 
-- [x] Collect all differents cases
-- [ ] Choose one case
-- [ ] Display all graph for the case
-- [ ] Select graphs for mean
-- [ ] Save mean
+- [x] Choose graphs for mean
+- [x] Save mean
 
 ## Compare graph page
 
-- [ ] Choose multiple file to display
+- [x] Choose multiple file to display
 - [ ] Add multi sample tests

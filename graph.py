@@ -42,10 +42,10 @@ class CircularGraph:
             ax.quiver(mean, 0, 0, r, label=k, color=Color(i).name, angles="xy", scale=2)
             i += 1
 
-    def openTxtFile(self, filepath):
+    def openTxtFile(self, filepath, name):
         df = pd.read_csv(filepath, sep=" ")
-        self.data["Data"] = self.formatPhaseData(df)
-        self.calcStats("Data")
+        self.data[name] = self.formatPhaseData(df)
+        self.calcStats(name)
 
     def formatPhaseData(self, data):
         phase_numbers = []

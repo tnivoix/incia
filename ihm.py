@@ -5,6 +5,7 @@ import matplotlib
 import pandas as pd
 
 from interfaceModels import Spike2Figure
+from scipy.stats import circmean
 
 matplotlib.use("TkAgg", force=True)
 import tkinter as tk
@@ -36,7 +37,7 @@ class XenopeAnalyser(tk.Tk):
 
         self.frames = {}
 
-        for F in (StartPage, Spike2Page, AnalysisPage, OneGraphPage, MeanGraphPage):
+        for F in (StartPage, Spike2Page, OneGraphPage, MeanGraphPage, MultipleGraphPage):
             frame = F(container, self)
 
             self.frames[F] = frame
@@ -75,25 +76,25 @@ class StartPage(tk.Frame):
 
         button2 = ttk.Button(
             self,
-            text="Do some analysis",
-            command=lambda: controller.show_frame(AnalysisPage),
-            name="startPage_button_analysisPage",
+            text="One Graph Page",
+            command=lambda: controller.show_frame(OneGraphPage),
+            name="startPage_button_oneGraphPage",
         )
         button2.pack()
 
         button3 = ttk.Button(
             self,
-            text="One Graph Page",
-            command=lambda: controller.show_frame(OneGraphPage),
-            name="startPage_button_oneGraphPage",
+            text="Mean Graph Page",
+            command=lambda: controller.show_frame(MeanGraphPage),
+            name="startPage_button_meanGraphPage",
         )
         button3.pack()
 
         button4 = ttk.Button(
             self,
-            text="Mean Graph Page",
-            command=lambda: controller.show_frame(MeanGraphPage),
-            name="startPage_button_meanGraphPage",
+            text="Display multiple graphs",
+            command=lambda: controller.show_frame(MultipleGraphPage),
+            name="startPage_button_multipleGraphPage",
         )
         button4.pack()
 
@@ -242,41 +243,6 @@ class Spike2Page(tk.Frame):
         self.children["spike2Page_toolbar"] = self.children.pop(toolbarName)
 
 
-class AnalysisPage(tk.Frame):
-    """
-    Page to do analysis.
-    """
-
-    def __init__(self, parent, controller):
-        tk.Frame.__init__(self, parent, name="analysisPage")
-        label = tk.Label(
-            self, text="Analysis Page", font=LARGE_FONT, name="analysisPage_label"
-        )
-        label.pack(pady=10, padx=10)
-
-        button1 = ttk.Button(
-            self,
-            text="Back to Home",
-            command=lambda: controller.show_frame(StartPage),
-            name="analysisPage_button_startPage",
-        )
-        button1.pack()
-
-        button2 = ttk.Button(
-            self,
-            text="Do analysis",
-            command=lambda: self.doAnalysis(),
-            name="analysisPage_button_doAnalysis",
-        )
-        button2.pack()
-
-    def doAnalysis(self):
-        """
-        TODO: Do analysis.
-        """
-        print("TODO: Do analysis")
-
-
 class OneGraphPage(tk.Frame):
     """
     TMP page to display hideable axes.
@@ -313,9 +279,9 @@ class OneGraphPage(tk.Frame):
         filepath = filedialog.askopenfilename(
             title="Open file", initialdir=".", filetypes=filetypes
         )
-
-        self.circularGraph = CircularGraph(filepath.split("/")[-1][:-4])
-        self.circularGraph.openTxtFile(filepath)
+        name = filepath.split("/")[-1][:-4]
+        self.circularGraph = CircularGraph(name)
+        self.circularGraph.openTxtFile(filepath, name)
         self.circularGraph.plotGraph()
 
         if "oneGraphPage_canvas" in list(self.children.keys()):
@@ -359,163 +325,138 @@ class MeanGraphPage(tk.Frame):
         button1.pack(side=tk.LEFT)
         button2 = ttk.Button(
             f1,
+            text="Compute mean",
+            command=lambda: self.computeMean(),
+            name="meanGraphPage_button_computeMean",
+        )
+        button2.pack(side=tk.LEFT)
+        """
+        button2 = ttk.Button(
+            f1,
             text="Open reference excel file",
             command=lambda: self.openReferenceFile(),
             name="meanGraphPage_button_openFile",
         )
-        button2.pack(side=tk.LEFT)
+        """
+        button3 = ttk.Button(
+            f1,
+            text="Add Graph",
+            command=lambda: self.addGraph(),
+            name="meanGraphPage_button_addGraph",
+        )
+        button3.pack(side=tk.LEFT)
         f1.pack()
+        f2.pack(side=tk.TOP)
+        self.row = 0
+        self.column = 0
+        self.graphs = {}
 
-    def openReferenceFile(self):
-        """
-        Ask the .txt file to open.
-        """
-        filetypes = [("Excel files", ".xlsx .xls")]
+    def addGraph(self):
+        filetypes = [("Text Document", "*.txt")]
 
         filepath = filedialog.askopenfilename(
             title="Open file", initialdir=".", filetypes=filetypes
         )
+        name = filepath.split("/")[-1][:-4]
+        graph = CircularGraph(name)
+        graph.openTxtFile(filepath, name)
+        graph.plotGraph()
 
-        self.getAllCases(filepath)
+        f = graph.fig
 
-    def getAllCases(self, filepath):
-        try:
-            # ERROR HERE folder
-            self.df = pd.read_excel(filepath, sheet_name="Data", usecols="A:F")
-            column_headers = self.df.columns.values.tolist()
-            new_headers = []
-            for column_header in column_headers:
-                self.df[column_header] = self.df[column_header].str.lower()
-                new_headers.append(column_header.rstrip())
-            self.df.columns = new_headers
-            f2 = self.children["meanGraphPage_frame2"]
-            self.drogues = self.df["Drogue"].unique().tolist()
-            droguesList = ttk.Combobox(
-                f2, values=self.drogues, name="meanGraphPage_droguesList"
-            )
-            droguesList.current(0)
-            droguesList.pack(side=tk.LEFT)
+        canvas = FigureCanvasTkAgg(f, self.children["meanGraphPage_frame2"])
+        canvas.draw()
+        canvas.get_tk_widget().bind("<Button-3>", self.deleteGraph)
+        canvas.get_tk_widget().config(width=300, height=300)
+        canvas.get_tk_widget().grid(row=self.row, column=self.column)
+        self.graphs[canvas.get_tk_widget().winfo_name()] = graph
+        stats = tk.Frame(self.children["meanGraphPage_frame2"])
+        for k, v in graph.stats.items():
+            stat = tk.Label(stats, text="{} : {}".format(k, v))
+            stat.pack(side="top")
+        stats.grid(row=self.row+1, column=self.column)
 
-            self.lesions = self.df["lésion"].unique().tolist()
-            lesionsList = ttk.Combobox(
-                f2, values=self.lesions, name="meanGraphPage_lesionsList"
-            )
-            lesionsList.current(0)
-            lesionsList.pack(side=tk.LEFT)
+        if self.column >=4:
+            self.column = 0
+            self.row += 2
+        else:
+            self.column += 1
 
-            self.locs = self.df["Localisation dépo drogue"].unique().tolist()
-            locsList = ttk.Combobox(f2, values=self.locs, name="meanGraphPage_locsList")
-            locsList.current(0)
-            locsList.pack(side=tk.LEFT)
+    def deleteGraph(self, event):
+        print(self.children["meanGraphPage_frame2"].children)
+        canvas = str(event.widget).split('.')[-1]
+        frame = canvas.replace("canvas","frame")
+        self.graphs.pop(canvas)
+        self.children["meanGraphPage_frame2"].children[canvas].destroy()
+        self.children["meanGraphPage_frame2"].children[frame].destroy()
+        print(self.graphs)
 
-            self.racines = self.df["Racine"].unique().tolist()
-            racinesList = ttk.Combobox(
-                f2, values=self.racines, name="meanGraphPage_racinesList"
-            )
-            racinesList.current(0)
-            racinesList.pack(side=tk.LEFT)
 
-            self.sides = ["L", "R"]
-            sidesList = ttk.Combobox(
-                f2, values=self.sides, name="meanGraphPage_sidesList"
-            )
-            sidesList.current(0)
-            sidesList.pack(side=tk.LEFT)
+    def computeMean(self):
+        means = []
+        for graph in self.graphs.values():
+            mean = circmean(graph.data[graph.name])
+            means.append(mean)
 
-            f2.pack()
-            button = ttk.Button(
-                self,
-                text="Display those graph",
-                command=lambda: self.displayAllGraphs(),
-                name="meanGraphPage_button_displayAllGraphs",
-            )
-            button.pack()
-        except FileNotFoundError:
-            print("File not found.")
-        except pd.errors.EmptyDataError:
-            print("No data")
+        files = [("Text Document", "*.txt")]
+        filename = filedialog.asksaveasfilename(filetypes=files, defaultextension=files)
+        df = pd.DataFrame({"Time":[0]*len(means), "'S-S'_Phase": means})
+        df.to_csv(filename, index=None, sep=" ", mode="a")
+       
+class MultipleGraphPage(tk.Frame):
+    """
+    Page to do analysis.
+    """
 
-    def getSpecies(self, directory):
-        drogue = (
-            self.children["meanGraphPage_frame2"]
-            .children["meanGraphPage_droguesList"]
-            .get()
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent, name="multipleGraphPage")
+        label = tk.Label(
+            self, text="MultipleGraph Page", font=LARGE_FONT, name="multipleGraphPage_label"
         )
-        lesion = (
-            self.children["meanGraphPage_frame2"]
-            .children["meanGraphPage_lesionsList"]
-            .get()
-        )
-        loc = (
-            self.children["meanGraphPage_frame2"]
-            .children["meanGraphPage_locsList"]
-            .get()
-        )
-        racine = (
-            self.children["meanGraphPage_frame2"]
-            .children["meanGraphPage_racinesList"]
-            .get()
-        )
-        side = (
-            self.children["meanGraphPage_frame2"]
-            .children["meanGraphPage_sidesList"]
-            .get()
-        )
-        df = self.df
-        df = df.loc[
-            (df["Drogue"] == drogue)
-            & (df["lésion"] == lesion)
-            & (df["Localisation dépo drogue"] == loc)
-            & (df["Racine"] == racine)
-        ]
+        label.pack(pady=10, padx=10)
+        f1 = tk.Frame(self, name="multipleGraphPage_frame1")
+        f2 = tk.Frame(self, name="multipleGraphPage_frame2")
 
-        species = list(df["Individu"])
-        print(species)
-        fileNames = []
-        for s in species:
-            df = df.loc[(df["Individu"] == s) & (df["Racine"] == racine)]
-            i = 0
-            for index, row in df.iterrows():
-                if row["Drogue"] == drogue and row["lésion"] == lesion and row["Localisation dépo drogue"] == loc:
-                    break
-                i += 2
-            folder = ""
-            with os.scandir(directory) as entries:
-                for entry in entries:
-                    if entry.is_dir:
-                        entry = entry.path
-                        print(entry)
-                        date, subject = s.split("-")
-                        print(date, subject)
-                        if date in entry and subject in entry:
-                            folder = entry
-                            break
-            file = ""
-            with os.scandir(folder) as entries:
-                for entry in entries:
-                    entry = entry.path
-                    r = ""
-                    if side == "c":
-                        r = "Caud"
-                    elif side == "r":
-                        r = "Rost"
-                    elif side == "m":
-                        r = "Mid"
-                    if side in entry and r in entry and "00{}".format(i) in entry:
-                        file = entry
-                        break
-            fileNames.append(file)
+        button1 = ttk.Button(
+            f1,
+            text="Back to Home",
+            command=lambda: controller.show_frame(StartPage),
+            name="multipleGraphPage_button_startPage",
+        )
+        button1.pack()
 
-        return fileNames
+        button2 = ttk.Button(
+            f1,
+            text="Add graph",
+            command=lambda: self.addGraph(),
+            name="multipleGraphPage_button_addGraph",
+        )
+        button2.pack()
+        f1.pack()
+        f2.pack(side=tk.TOP)
+
+    def addGraph(self):
+        filetypes = [("Text Document", "*.txt")]
+
+        filepath = filedialog.askopenfilename(
+            title="Open file", initialdir=".", filetypes=filetypes
+        )
+        name = filepath.split("/")[-1][:-4]
+        if "!canvas" not in self.children["multipleGraphPage_frame2"].children.keys():
+            self.graph = CircularGraph(name)
         
+        self.graph.openTxtFile(filepath, name)
+        self.graph.plotGraph()
 
-    def displayAllGraphs(self):
-        directory = filedialog.askdirectory(title="Select the folder with all analyse folders")
-        fileNames = self.getSpecies(directory)
-        print(fileNames)
-        
-                    
+        if "!canvas" not in self.children["multipleGraphPage_frame2"].children.keys():
+            f = self.graph.fig
 
+            self.canvas = FigureCanvasTkAgg(f, self.children["multipleGraphPage_frame2"])
+            
+            self.canvas.get_tk_widget().config(width=500, height=500)
+            self.canvas.get_tk_widget().pack(side=tk.TOP)
+
+        self.canvas.draw()
 
 if __name__ == "__main__":
     app = XenopeAnalyser()
