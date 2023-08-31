@@ -4,7 +4,7 @@
 
 First you need Python, you can download it from the official webpage : https://www.python.org/downloads/
 
-Then you need to install all requiered libraries with the command ` pip install -r requirements.txt `
+Then you need to install all requiered libraries with the command ` pip install -r C:\*path_to_application*\requirements.txt `
 
 Then, to start the application, you need to run the command ` python xenopeAnalyser.py ` or double click on the file xenopeAnalyser.py
 
