@@ -1,17 +1,14 @@
-import os
-import numpy as np
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import matplotlib
 import pandas as pd
 
-from interfaceModels import Spike2Figure
 from scipy.stats import circmean
 
 matplotlib.use("TkAgg", force=True)
 import tkinter as tk
 from tkinter import ttk
 from tkinter import filedialog
-from spike2FigOld import Spike2Fig
+from spike2Fig import Spike2Fig
 from static import Side, Root
 from graph import CircularGraph
 
@@ -34,6 +31,11 @@ class XenopeAnalyser(tk.Tk):
         container.pack(side="top", fill="both", expand=True)
         container.grid_rowconfigure(0, weight=1)
         container.grid_columnconfigure(0, weight=1)
+        
+        width= self.winfo_screenwidth()
+        height= self.winfo_screenheight()
+        #setting tkinter window size
+        self.geometry("%dx%d" % (width, height))
 
         self.frames = {}
 
@@ -383,13 +385,11 @@ class MeanGraphPage(tk.Frame):
             self.column += 1
 
     def deleteGraph(self, event):
-        print(self.children["meanGraphPage_frame2"].children)
         canvas = str(event.widget).split('.')[-1]
         frame = canvas.replace("canvas","frame")
         self.graphs.pop(canvas)
         self.children["meanGraphPage_frame2"].children[canvas].destroy()
         self.children["meanGraphPage_frame2"].children[frame].destroy()
-        print(self.graphs)
 
 
     def computeMean(self):
