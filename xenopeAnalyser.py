@@ -1,7 +1,7 @@
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 import matplotlib
 import pandas as pd
-
+import numpy as np
 from scipy.stats import circmean
 
 matplotlib.use("TkAgg", force=True)
@@ -48,12 +48,14 @@ class XenopeAnalyser(tk.Tk):
 
         self.show_frame(StartPage)
 
-    def show_frame(self, cont):
+    def show_frame(self, cont, redirectPath=""):
         """
         Show the selected page.
         """
         frame = self.frames[cont]
         frame.tkraise()
+        if redirectPath != "":
+            frame.createGraph(redirectPath)
 
 
 class StartPage(tk.Frame):
@@ -145,6 +147,13 @@ class Spike2Page(tk.Frame):
             name="spike2Page_button_saveEvents",
         )
 
+        button5 = ttk.Button(
+            f1,
+            text="Compute Phases",
+            command=lambda: self.computePhases(),
+            name="spike2Page_button_computePhases",
+        )
+
         for s in [e.name for e in Side]:
             for r in [e.name for e in Root]:
                 name = "{}-{}".format(s, r)
@@ -168,6 +177,10 @@ class Spike2Page(tk.Frame):
     def saveEvents(self):
         savefile = self.filename[:-4] + ".csv"
         self.myFig.saveEventsInCsv(savefile)
+
+    def computePhases(self):
+        fileName = self.filename
+        self.myFig.computePhases(fileName)
 
     def changeAxe(self, name):
         """
@@ -225,6 +238,9 @@ class Spike2Page(tk.Frame):
             self.children["spike2Page_frame1"].children[
                 "spike2Page_button_saveEvents"
             ].pack(side=tk.LEFT)
+            self.children["spike2Page_frame1"].children[
+                "spike2Page_button_computePhases"
+            ].pack(side=tk.LEFT)
             self.children["spike2Page_frame2"].pack()
 
         canvas = FigureCanvasTkAgg(f, self)
@@ -281,6 +297,10 @@ class OneGraphPage(tk.Frame):
         filepath = filedialog.askopenfilename(
             title="Open file", initialdir=".", filetypes=filetypes
         )
+        
+        self.createGraph(filepath)
+
+    def createGraph(self, filepath):
         name = filepath.split("/")[-1][:-4]
         self.circularGraph = CircularGraph(name)
         self.circularGraph.openTxtFile(filepath, name)
@@ -353,6 +373,8 @@ class MeanGraphPage(tk.Frame):
         self.column = 0
         self.graphs = {}
 
+        self.controller = controller
+
     def addGraph(self):
         filetypes = [("Text Document", "*.txt")]
 
@@ -396,12 +418,15 @@ class MeanGraphPage(tk.Frame):
         means = []
         for graph in self.graphs.values():
             mean = circmean(graph.data[graph.name])
+            mean = np.rad2deg(mean) / 360
             means.append(mean)
 
         files = [("Text Document", "*.txt")]
         filename = filedialog.asksaveasfilename(filetypes=files, defaultextension=files)
         df = pd.DataFrame({"Time":[0]*len(means), "'S-S'_Phase": means})
         df.to_csv(filename, index=None, sep=" ", mode="a")
+
+        self.controller.show_frame(OneGraphPage, filename)
        
 class MultipleGraphPage(tk.Frame):
     """

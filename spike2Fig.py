@@ -77,7 +77,6 @@ class Spike2Fig:
                         self.signalsDf["GVS"] = newGVS
                     gvsReady = False
         if os.path.isfile(eventsFile):
-            print(eventsFile)
             self.eventsData = self.clearDict(pd.read_csv(eventsFile).to_dict('list'))
         else:
             for event in data.events:
@@ -91,7 +90,7 @@ class Spike2Fig:
         
         print("Data collected in {} seconds".format(round(time.time() - tmp, 2)))
 
-        if "S_GVS" not in list(self.eventsData.keys()):
+        if "GVS" in self.signalsDf.columns and "S_GVS" not in list(self.eventsData.keys()):
             self.getGVSStartsEnds(oldGVS, oldGVSTimes)
 
     def getGVSStartsEnds(self, gvs, times):
@@ -148,6 +147,9 @@ class Spike2Fig:
         print(
             "File {} saved in {} seconds".format(savefile, round(time.time() - tmp, 2))
         )
+
+    def computePhases(self, filepath):
+        print(filepath)
 
     def onpress(self, event):
         """
@@ -246,14 +248,17 @@ class Spike2Fig:
         self.ax1 = self.fig.add_subplot(211)
         self.ax2 = self.fig.add_subplot(212, sharex=self.ax1)
 
-        self.plotSignal(self.ax1, "GVS")
-        self.plotSignal(self.ax2, "L-Rost")
+        name1 = "GVS" if "GVS" in self.signalsDf.columns else self.signalsDf.columns[1]
+        name2 = self.signalsDf.columns[1] if self.signalsDf.columns[1] != name1 else self.signalsDf.columns[2]
+
+        self.plotSignal(self.ax1, name1)
+        self.plotSignal(self.ax2, name2)
 
         self.ax1.set(xlim=(0, self.signalsDf["Times"].iloc[-1]))
 
         self.fig.subplots_adjust(hspace=0.1)
         self.fig.legend(
-            handles=[self.eventPlots["S_GVS"], self.eventPlots["E_GVS"]],
+            handles=[self.eventPlots["S_{}".format(name1)], self.eventPlots["E_{}".format(name1)]],
             bbox_to_anchor=(0.5, -0.3),
             loc="lower center",
             ncol=2,

@@ -3,6 +3,7 @@
 ## Setup
 
 First you need Python, you can download it from the official webpage : https://www.python.org/downloads/
+When you install it, check the box that says "Add python.exe to PATH".
 
 Then you need to install all requiered libraries with the command ` pip install -r C:\*path_to_application*\requirements.txt `
 
@@ -24,7 +25,7 @@ On this page, you can open a .txt file from Spike2 "Phase 'S-S'" to display the 
 
 ## Mean Graph Page
 
-On this page, you add open multiple graphs the same way that the other page. You can right click on a graph to erase it. You can make the mean of all graph on screen and save it in a file.
+On this page, you add open multiple graphs the same way that the other page. You can right click on a graph to erase it. You can make the mean of all graph on screen and save it in a file. When you compute the mean, you will be redirect to the OneGrahPage to see the result graph.
 
 ## Multiple Graph Page
 

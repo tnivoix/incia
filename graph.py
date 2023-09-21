@@ -58,8 +58,13 @@ class CircularGraph:
             if i != 0:
                 # Test if the actual phase time is far away for the previous one
                 if data.iloc[i, 0] - data.iloc[i - 1, 0] > 10:
-                    # Select the phase to deletion
-                    row_to_delete.append(i-1)
+                    time_tmp = data.iloc[i - 1, 0]
+                    j=0
+                    while time_tmp == data.iloc[i - 1, 0] :
+                        # Select the phase to deletion
+                        row_to_delete.append(i-1 - j)
+                        j += 1
+                        time_tmp = data.iloc[i - 1 - j, 0]
                     # Change cycle
                     phase_tmp += 1
             # Write the cycle number in a tmp array
