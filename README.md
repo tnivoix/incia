@@ -11,11 +11,13 @@ Then, to start the application, you need to run the command ` python xenopeAnaly
 
 ## Home Page
 
-The home page just redirect to other pages.
+The home page just redirects to other pages.
 
 ## Spike2 Page
 
-On this page, you can load a .smr file to see all signals and you can switch between them with the buttons. You can also export the file to .txt for an import in Spike2. You can also just save events that will be automaticly load in the application.
+On this page, you can load a .smr file to see all signals and you can switch between them with the buttons. You can also export the file to .txt for an import in Spike2. You can also just save events that will be automaticly load in the application. Finaly, you can computes phases 'S-S' comparing the GVS with all others signals.
+
+The program will load all signals and events with "MS-" in it. I use this patern to filter start event channels from other.
 
 On each signals, you can click and drag events to move them, you can right on an event to delete it and you can middle click to add one. If you click upper the 0 on the Y axe, it's for start events and if it's under, it's for end events.
 
