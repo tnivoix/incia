@@ -1,3 +1,4 @@
+from pprint import pprint
 import time
 from neo.io import Spike2IO
 import numpy as np
@@ -148,8 +149,41 @@ class Spike2Fig:
             "File {} saved in {} seconds".format(savefile, round(time.time() - tmp, 2))
         )
 
-    def computePhases(self, filepath):
-        print(filepath)
+    def computePhases(self, filePath):
+        tmp = time.time()
+        if "S_GVS" in self.eventsData.keys():
+            gvs = self.eventsData["S_GVS"]
+            filtered_dict = {k:v for (k,v) in self.eventsData.items() if "S_" in k and "GVS" not in k}
+            for k, v in filtered_dict.items():
+                times = []
+                phases = []
+                j = 0
+                while v[j] < gvs[0]:
+                        j +=1
+                stop = False
+                for i in range(len(gvs)):
+                    if i < len(gvs) - 1:
+                        period = gvs[i+1] - gvs[i]
+                        while v[j] < gvs[i+1]:
+                            times.append(gvs[i])
+                            phases.append((v[j] - gvs[i]) / period)
+                            if j + 1 >= len(v):
+                                stop = True
+                                break
+                            else:
+                                j += 1
+                        if stop:
+                            break
+                # Export file
+                tmp = time.time()
+                events = pd.DataFrame({"Times":times,"'S-S'_Phase": phases})
+                events.to_csv("{}-Phase Ev-GVS & {}- mode 'S-S'.txt".format(filePath[:-4], k[2:]), index=None, sep=" ")
+        print(
+            "Phases computed in {} seconds".format(round(time.time() - tmp, 2))
+        )
+
+
+
 
     def onpress(self, event):
         """
