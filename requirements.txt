@@ -6,6 +6,5 @@ neurodsp
 scipy
 tk
 pandas
-astropy
 openpyxl
 pdoc3
