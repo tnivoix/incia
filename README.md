@@ -5,7 +5,7 @@
 First you need Python, you can download it from the official webpage : https://www.python.org/downloads/
 When you install it, check the box that says "Add python.exe to PATH".
 
-Then you need to install all requiered libraries with the command ` pip install -r C:\*path_to_application*\requirements.txt `
+Then you need to install all requiered libraries with the command ` pip install -r C:\*path_to_application*\requirements.txt ` (Replace *path_to_application* by the current path. You can get it in properties of the requirements.txt file)
 
 Then, to start the application, you need to run the command ` python xenopeAnalyser.py ` or double click on the file xenopeAnalyser.py
 
