@@ -32,7 +32,7 @@ class Spike2Fig:
         Read a file .smr and get all data.
         """
         tmp = time.time()
-        reader = Spike2IO(filename=filePath)
+        reader = Spike2IO(filename=filePath, try_signal_grouping=False)
         data = reader.read()
         print(
             "File {} read in {} seconds".format(filePath, round(time.time() - tmp, 2))
@@ -66,7 +66,12 @@ class Spike2Fig:
                 else:
                     if self.signalsDf.empty:
                         self.signalsDf["Times"] = signals.times.magnitude
-                    self.signalsDf[name.replace("vr", "")] = values
+                    n = name.replace("vr", "")
+                    while len(values) < len(self.signalsDf["Times"]):
+                        values = np.append(values, [0])
+                    while len(values) > len(self.signalsDf["Times"]):
+                       values = np.delete(values, -1, 0)
+                    self.signalsDf[n] = values
                 if gvsReady and not self.signalsDf.empty:
                     # execTime = self.getGVSStartsEnds(oldGVS, oldGVSTimes)
                     if len(oldGVSTimes) == len(self.signalsDf["Times"]):
@@ -88,7 +93,11 @@ class Spike2Fig:
                     self.eventsData[name.replace("S_", "E_")] = []
                 if "S_" in event.name or "E_" in event.name:
                     self.eventsData[name] = values.tolist()
-        
+            if(len(self.eventsData) == 0):
+                for s in self.signalsDf.keys():
+                    if s != "Times" and s != "GVS":
+                        self.eventsData["S_{}".format(s)] = []
+                        self.eventsData["E_{}".format(s)] = []
         print("Data collected in {} seconds".format(round(time.time() - tmp, 2)))
 
         if "GVS" in self.signalsDf.columns and "S_GVS" not in list(self.eventsData.keys()):
@@ -155,29 +164,30 @@ class Spike2Fig:
             gvs = self.eventsData["S_GVS"]
             filtered_dict = {k:v for (k,v) in self.eventsData.items() if "S_" in k and "GVS" not in k}
             for k, v in filtered_dict.items():
-                times = []
-                phases = []
-                j = 0
-                while v[j] < gvs[0]:
-                        j +=1
-                stop = False
-                for i in range(len(gvs)):
-                    if i < len(gvs) - 1:
-                        period = gvs[i+1] - gvs[i]
-                        while v[j] < gvs[i+1]:
-                            times.append(gvs[i])
-                            phases.append((v[j] - gvs[i]) / period)
-                            if j + 1 >= len(v):
-                                stop = True
+                if len(v) > 0:
+                    times = []
+                    phases = []
+                    j = 0
+                    while j - 1 < len(v) and v[j] < gvs[0]:
+                            j +=1
+                    stop = False
+                    for i in range(len(gvs)):
+                        if i < len(gvs) - 1:
+                            period = gvs[i+1] - gvs[i]
+                            while v[j] < gvs[i+1]:
+                                times.append(gvs[i])
+                                phases.append((v[j] - gvs[i]) / period)
+                                if j + 1 >= len(v):
+                                    stop = True
+                                    break
+                                else:
+                                    j += 1
+                            if stop:
                                 break
-                            else:
-                                j += 1
-                        if stop:
-                            break
-                # Export file
-                tmp = time.time()
-                events = pd.DataFrame({"Times":times,"'S-S'_Phase": phases})
-                events.to_csv("{}-Phase Ev-GVS & {}- mode 'S-S'.txt".format(filePath[:-4], k[2:]), index=None, sep=" ")
+                    # Export file
+                    tmp = time.time()
+                    events = pd.DataFrame({"Times":times,"'S-S'_Phase": phases})
+                    events.to_csv("{}-Phase Ev-GVS & {}- mode 'S-S'.txt".format(filePath[:-4], k[2:]), index=None, sep=" ")
         print(
             "Phases computed in {} seconds".format(round(time.time() - tmp, 2))
         )
@@ -247,6 +257,10 @@ class Spike2Fig:
         """
         tmp = time.time()
         ax.clear()
+
+        if name not in self.signalsDf.keys():
+            name = name[:2]+name[2:].lower()
+        
         times = np.linspace(0, self.signalsDf["Times"].iloc[-1], num=100001)
         values = np.interp(times, self.signalsDf["Times"], self.signalsDf[name])
         df = pd.DataFrame({"Times": times, name: values})
