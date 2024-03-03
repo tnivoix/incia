@@ -7,7 +7,7 @@ When you install it, check the box that says "Add python.exe to PATH".
 
 Then you need to install all requiered libraries. Start a Command Prompt ("Invite de commande") and run the command ` pip install -r C:\*path_to_application*\requirements.txt ` (Replace *path_to_application* by the current path. You can get it in properties of the requirements.txt file)
 
-Then, to start the application, you need to run the command ` python xenopeAnalyser.py ` or double click on the file xenopeAnalyser.py
+Then, to start the application, you need to run the command ` python xenopeAnalyser.py ` from a Command Prompt or double click on the file xenopeAnalyser.py (open with Python)
 
 ## Home Page
 
